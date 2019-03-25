@@ -17,8 +17,6 @@ def draw_ui(output):
 
 # main loop code here #
 def main(output):
-    thread1 = threading.Thread(target=u.get_user_input())
-    thread1.start()
     while running is True:
         try:
             u.scr.clear()
@@ -29,9 +27,9 @@ def main(output):
         except KeyboardInterrupt:
             u.die()
     u.die()
-
-
 # main loop code ends #
+
+
 # main program code here #
 if __name__ == "__main__":
     running = True

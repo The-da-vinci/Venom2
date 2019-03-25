@@ -3,15 +3,15 @@ import curses
 
 class UI:
     # initialize the program
-    def __init__(self, output):
+    def __init__(self, msg_buf):
         self.scr = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
         self.scr_height, self.scr_width = self.scr.getmaxyx()
-        self.output_zone = curses.newwin(5, self.scr_height - 1, 5, 10)
+        self.msg_buf_zone = curses.newwin(5, self.scr_height - 1, 5, 10)
         self.message = ""
-        self.running = True
-        self.output = output
+        self.running = False
+        self.msg_buf = msg_buf
 
     def draw_top_line(self):
         self.scr.addstr(0, 0, "(type q to quit)", curses.A_REVERSE)
@@ -21,15 +21,14 @@ class UI:
         self.scr.addstr(self.scr_height - 1, 0, ":", curses.color_pair(0))
         self.draw_line(self.scr_height - 2)
 
-    def draw_output(self, output):
+    def draw_output(self, msg_buf):
         z = self.scr_height - 3
-        new_msg = len(output)
+        new_msg = len(msg_buf)
         if int(new_msg) >= 1:
-            for i in output:
+            for i in msg_buf:
                     if z > 1:
                         try:
-                            for i in output:
-                                self.scr.addstr(self.scr_height - 3, 1, i)
+                                self.scr.addstr(z, 0, i)
                                 self.scr.refresh()
                                 new_msg -= 1
                                 z -= 1
@@ -50,18 +49,18 @@ class UI:
         self.input_x = 1
         self.message = self.scr.getstr(self.input_y, self.input_x)
         print(self.message)
+        self.message = self.message.decode(encoding='UTF-8')
 
         # check if input is blank
         if len(self.message) == 0:
             pass
         # check if the input is quit
         elif str(self.message[0]) == "/quit":
-            return quit()
+            quit()
             self.running = False
         else:  # else just draw it
-            self.message = self.message.decode(encoding='UTF-8')
-            self.output.append(self.message)
-            self.draw_output(self.output)
+            self.msg_buf.append(self.message)
+            self.draw_output(self.msg_buf)
 
     # kills the program correctly
     def die(self):
@@ -76,15 +75,33 @@ class UI:
             i += 1
         self.scr.addstr(y, 0, line)
 
+    def manage_screen_buffer(self):
+            try:
+                # If we've got screen full of text, scroll it
+                if (len(msg_buf) == self.scr_height):
+                        for i in range(1, self.scr_height):
+                                msg_buf[i - 1] = msg_buf[i]
+                for y in range(0, len(msg_buf)):
+                    if msg_buf[y] is None:
+                        pass
+                    else:
+                        self.scr.clear()
+                        self.draw_top_line()
+                        self.draw_bottom_line()
+                        self.scr.addstr(1, y, msg_buf[y])
+                        self.scr.refresh()
+            except Exception as err:
+                print(err)
+                msg_buf.append(str(err))
+
+
 if __name__ == "__main__":
-    output = ['hey']
-    u = UI(output)
+    msg_buf = []
+    u = UI(msg_buf)
     while True:
         try:
-            u.draw_top_line()
-            u.draw_bottom_line()
-            u.draw_output(output)
-            u.get_user_input()
+            u.manage_screen_buffer()
+            u.draw_output(msg_buf)
             u.scr.refresh()
         except KeyboardInterrupt:
             exit()
