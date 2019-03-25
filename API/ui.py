@@ -46,9 +46,9 @@ class UI:
 
     def get_user_input(self):
         # get user input
-        input_y = self.scr_height - 1
-        input_x = 1
-        self.message = self.scr.getstr(input_y, input_x)
+        self.input_y = self.scr_height - 1
+        self.input_x = 1
+        self.message = self.scr.getstr(self.input_y, self.input_x)
         print(self.message)
 
         # check if input is blank
