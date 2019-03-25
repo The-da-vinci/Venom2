@@ -9,7 +9,7 @@ class UI:
         curses.use_default_colors()
         self.scr_height, self.scr_width = self.scr.getmaxyx()
         self.output_zone = curses.newwin(5, self.scr_height - 1, 5, 10)
-        self.command = ""
+        self.message = ""
         self.running = True
         self.output = []
 
@@ -34,6 +34,7 @@ class UI:
                                 new_msg -= 1
                                 z -= 1
                         except Exception as err:
+                            err = str(err)
                             print(err)
                             self.scr.addstr(self.scr_height - 3, 1, err)
                             self.scr.refresh()
@@ -46,19 +47,21 @@ class UI:
     def get_user_input(self):
         # get user input
         input_y = self.scr_height - 1
-        input_x = self.scr_width - 1
-        self.command = self.scr.getstr(input_y, input_x)
-        print(self.command)
+        input_x = 1
+        self.message = self.scr.getstr(input_y, input_x)
+        deez_msgs = []
+        print(self.message)
 
         # check if input is blank
-        if len(self.command) == 0:
+        if len(self.message) == 0:
             pass
         # check if the input is quit
-        elif str(self.command[0]) == "q":
+        elif str(self.message[0]) == "/quit":
             return quit()
             self.running = False
         else:  # else just draw it
-            self.draw_output(self.command)
+            deez_msgs.append(self.message.strip())
+            self.draw_output(self.message)
 
     # kills the program correctly
     def die(self):
@@ -72,3 +75,17 @@ class UI:
             line += "-"
             i += 1
         self.scr.addstr(y, 0, line)
+
+if __name__ == "__main__":
+    output = ['hey']
+    u = UI(output)
+    while True:
+        try:
+            u.scr.clear()
+            u.draw_top_line()
+            u.draw_bottom_line()
+            u.draw_output(output)
+            u.get_user_input()
+            u.scr.refresh()
+        except KeyboardInterrupt:
+            exit()
