@@ -11,7 +11,7 @@ class UI:
         self.output_zone = curses.newwin(5, self.scr_height - 1, 5, 10)
         self.message = ""
         self.running = True
-        self.output = []
+        self.output = output
 
     def draw_top_line(self):
         self.scr.addstr(0, 0, "(type q to quit)", curses.A_REVERSE)
@@ -49,7 +49,6 @@ class UI:
         input_y = self.scr_height - 1
         input_x = 1
         self.message = self.scr.getstr(input_y, input_x)
-        deez_msgs = []
         print(self.message)
 
         # check if input is blank
@@ -60,8 +59,9 @@ class UI:
             return quit()
             self.running = False
         else:  # else just draw it
-            deez_msgs.append(self.message.strip())
-            self.draw_output(self.message)
+            self.message = self.message.decode(encoding='UTF-8')
+            self.output.append(self.message)
+            self.draw_output(self.output)
 
     # kills the program correctly
     def die(self):
@@ -81,7 +81,6 @@ if __name__ == "__main__":
     u = UI(output)
     while True:
         try:
-            u.scr.clear()
             u.draw_top_line()
             u.draw_bottom_line()
             u.draw_output(output)
