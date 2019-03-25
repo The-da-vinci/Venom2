@@ -18,21 +18,30 @@ class UI:
         self.draw_line(1)
 
     def draw_bottom_line(self):
-        self.scr.addstr(self.scr_height - 1, 0, ':', curses.color_pair(0))
+        self.scr.addstr(self.scr_height - 1, 0, ":", curses.color_pair(0))
         self.draw_line(self.scr_height - 2)
 
     def draw_output(self, output):
         z = self.scr_height - 3
-        new_msg = len(self.output) - 1
-        while z > 1:
-            for i in self.output:
-                i = i.split(":")
-                for a in i:
-                    print(z)
-                    print(a)
-                    self.scr.addstr(z, 100, a)
-                    new_msg -= 1
-                    z -= 1
+        new_msg = len(output)
+        if int(new_msg) >= 1:
+            for i in output:
+                    if z > 1:
+                        try:
+                            for i in output:
+                                self.scr.addstr(self.scr_height - 3, 1, i)
+                                self.scr.refresh()
+                                new_msg -= 1
+                                z -= 1
+                        except Exception as err:
+                            print(err)
+                            self.scr.addstr(self.scr_height - 3, 1, err)
+                            self.scr.refresh()
+                            exit()
+                    else:
+                        pass
+        else:
+            pass
 
     def get_user_input(self):
         # get user input
