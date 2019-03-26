@@ -28,10 +28,10 @@ class UI:
             for i in msg_buf:
                     if z > 1:
                         try:
-                                self.scr.addstr(z, 0, i)
-                                self.scr.refresh()
-                                new_msg -= 1
-                                z -= 1
+                            self.scr.addstr(z, 0, i)
+                            self.scr.refresh()
+                            new_msg -= 1
+                            z -= 1
                         except Exception as err:
                             err = str(err)
                             print(err)
@@ -79,9 +79,9 @@ class UI:
             try:
                 # If we've got screen full of text, scroll it
                 if (len(msg_buf) == self.scr_height):
-                        for i in range(1, self.scr_height):
+                        for i in range(2, self.scr_height - 3):
                                 msg_buf[i - 1] = msg_buf[i]
-                for y in range(0, len(msg_buf)):
+                for y in range(1, len(msg_buf)):
                     if msg_buf[y] is None:
                         pass
                     else:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     while True:
         try:
             u.manage_screen_buffer()
-            u.draw_output(msg_buf)
             u.scr.refresh()
+            u.get_user_input()
         except KeyboardInterrupt:
             exit()
