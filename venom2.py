@@ -29,20 +29,25 @@ vuln_to = ['MySQL Classic', 'MiscError', 'MiscError2', 'Oracle', 'JDBC_CFM', 'JD
 
 class menus:
     def __init__(self):
-        self.ending = arg1
-        self.dorks = arg2
-        self.threads = arg3
-        self.load_dorks()
+        if len(sys.argv) > 0:
+            self.tld = arg1
+            self.dorks = arg2
+            self.threads = arg3
+            self.load_dorks()
+            self.s = scanning()
+        else:
+            self.load_dorks()
+            self.s = scanning()
 
     def load_dorks(self):
         try:
             d0rk = [line.strip() for line in open("lists/d0rks", "r", encoding="utf-8")]
             header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
             xsses = [line.strip() for line in open("lists/xsses", "r", encoding="utf-8")]
-            lfis = [line.strip() for line in open("lists/pathtotest_huge.txt", "r", encoding="utf-8")]
+            lfis = [line.strip() for line in open("lists/pathto_huge.txt", "r", encoding="utf-8")]
             tables = [line.strip() for line in open("lists/tables", "r", encoding="utf-8")]
             columns = [line.strip() for line in open("lists/columns", "r", encoding="utf-8")]
-            search_Ignore = str([line.strip() for line in open("lists/ignore", "r", encoding="utf-8")])
+            search_Ignore = [line.strip() for line in open("lists/ignore", "r", encoding="utf-8")]
             random.shuffle(d0rk)
             random.shuffle(header)
             random.shuffle(lfis)
@@ -73,8 +78,8 @@ class menus:
             ending = arg1
             dorks = arg2
             threads = arg3
-            scanning.scan(arg1, arg2, arg3)
-    
+            self.s.scan(arg1, arg2, arg3)
+
     def main_menu(self):
         self.logo()
         print("[1] Dork and Vuln Scan")
@@ -84,7 +89,7 @@ class menus:
         print("[5] Exit\n")
         choice = int(input(":"))
         if choice == 1:
-            scanning.scan()
+            self.s.scan()
         if choice == 2:
             pass
         if choice == 3:
@@ -98,7 +103,8 @@ class menus:
 def main():
     while running is True:
         try:
-            main_menu()
+            m = menus()
+            m.main_menu()
         except KeyboardInterrupt or Exception as err:
             print(err)
             exit()
@@ -109,17 +115,38 @@ class scanning:
         self.arg1 = arg1
         self.arg2 = arg2
         self.arg3 = arg3
+        self.tld
+        self.vuln_list = ['error in your SQL syntax', 'mysql_fetch', 'num_rows', 'ORA-01756',
+                          'Error Executing Database Query', 'SQLServer JDBC Driver',
+                          'OLE DB Provider for SQL Server', 'Unclosed quotation mark',
+                          'ODBC Microsoft Access Driver', 'Microsoft JET Database',
+                          'Error Occurred While Processing Request', 'Microsoft JET Database',
+                          'Server Error', 'ODBC Drivers error', 'Invalid Querystring',
+                          'OLE DB Provider for ODBC', 'VBScript Runtime', 'ADODB.Field',
+                          'BOF or EOF', 'ADODB.Command', 'JET Database', 'mysql_fetch_array',
+                          'Syntax error', 'mysql_numrows()', 'GetArray()', 'FetchRow()',
+                          'Input string was not in a correct format']
+
+        self.vuln_to = ['MySQL Classic', 'MiscError', 'MiscError2', 'Oracle', 'JDBC_CFM',
+                        'JDBC_CFM2', 'MSSQL_OLEdb', 'MSSQL_Uqm', 'MS-Access_ODBC',
+                        'MS-Access_JETdb', 'Processing Request', 'MS-Access JetDb',
+                        'Server Error', 'ODBC Drivers error', 'Invalid Querystring',
+                        'OLE DB Provider for ODBC', 'VBScript Runtime', 'ADODB.Field', 'BOF or EOF',
+                        'ADODB.Command', 'JET Database', 'mysql_fetch_array', 'Syntax error',
+                        'mysql_numrows()', 'GetArray()', 'FetchRow()', 'Input String Error']
 
     def scan(self, arg1, arg2, arg3):
         if len(arg1) > 0:
             pass
         else:
-        sites = input('\nChoose your target(domain) for example ".com"\r\n :')
-        sitearray = [sites]
-        dorks = input("Choose the number of random dorks (0 for all.. may take awhile!) : ")
+            self.tld = input('\nChoose your target domain for example ".com"\r\n :')
+            self.sitearray = [self.tld]
+            dorks = input("Choose the number of dorks (0 for all)\r\n: ")
+
 
 # main program code here #
 if __name__ == "__main__":
+    m = menus()
     running = True
     print(sys.argv)
     if len(sys.argv) >= 2:
@@ -128,9 +155,9 @@ if __name__ == "__main__":
                 arg1 = str(sys.argv[2])
                 arg2 = sys.argv[3]
                 arg3 = sys.argv[4]
-                pre_run()
+                m.pre_run()
             except Exception as err:
                 print(err)
-                usage()
+                m.usage()
     else:
         main()
