@@ -27,88 +27,110 @@ vuln_to = ['MySQL Classic', 'MiscError', 'MiscError2', 'Oracle', 'JDBC_CFM', 'JD
            'mysql_numrows()', 'GetArray()', 'FetchRow()', 'Input String Error']
 
 
-def usage():
-    print('usage: ./venom2.py <function> <arg1> <arg2> <arg3>')
-    print("dorkscan: ./venom2.py scan 'ending' dorks threads")
-    print("example: ./venom2.py scan '.com' 1000 500")
-    print('or just ./venom2.py for gui')
+class menus:
+    def __init__(self):
+        self.ending = arg1
+        self.dorks = arg2
+        self.threads = arg3
+        self.load_dorks()
+
+    def load_dorks(self):
+        try:
+            d0rk = [line.strip() for line in open("lists/d0rks", "r", encoding="utf-8")]
+            header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
+            xsses = [line.strip() for line in open("lists/xsses", "r", encoding="utf-8")]
+            lfis = [line.strip() for line in open("lists/pathtotest_huge.txt", "r", encoding="utf-8")]
+            tables = [line.strip() for line in open("lists/tables", "r", encoding="utf-8")]
+            columns = [line.strip() for line in open("lists/columns", "r", encoding="utf-8")]
+            search_Ignore = str([line.strip() for line in open("lists/ignore", "r", encoding="utf-8")])
+            random.shuffle(d0rk)
+            random.shuffle(header)
+            random.shuffle(lfis)
+        except Exception as err:
+            print(err)
+            exit()
+
+    def usage():
+        print('usage: ./venom2.py <function> <arg1> <arg2> <arg3>')
+        print("dorkscan: ./venom2.py scan 'ending' dorks threads")
+        print("example: ./venom2.py scan '.com' 1000 500")
+        print('or just ./venom2.py for gui')
+
+    def logo(self):
+        print("---------------------------------------------------")
+        print(" __      ________ _   _  ____  __  __   ___  ")
+        print(" \ \    / /  ____| \ | |/ __ \|  \/  | |__ \ ")
+        print("  \ \  / /| |__  |  \| | |  | | \  / |    ) |")
+        print("   \ \/ / |  __| | . ` | |  | | |\/| |   / / ")
+        print("    \  /  | |____| |\  | |__| | |  | |  / /_ ")
+        print("     \/   |______|_| \_|\____/|_|  |_| |____|" + version)
+        print("                                              by Da-vinci")
+        print("         Proxy Enabled " + " [", proxyenabled, "] ")
+        print("---------------------------------------------------")
+
+    def pre_run(self):
+        if func == 'scan':
+            ending = arg1
+            dorks = arg2
+            threads = arg3
+            scanning.scan(arg1, arg2, arg3)
+    
+    def main_menu(self):
+        self.logo()
+        print("[1] Dork and Vuln Scan")
+        print("[2] Enable Tor/Proxy Support")
+        print("[3] Cloudflare Resolving")
+        print("[4] Misc Options")
+        print("[5] Exit\n")
+        choice = int(input(":"))
+        if choice == 1:
+            scanning.scan()
+        if choice == 2:
+            pass
+        if choice == 3:
+            pass
+        if choice == 4:
+            pass
+        if choice == 5:
+            exit()
 
 
-def pre_run():
-    if func == scan:
-        ending = arg1
-        dorks = arg2
-        threads = arg3
-        scan()
-
-
-def logo():
-    print("---------------------------------------------------")
-    print(" __      ________ _   _  ____  __  __   ___  ")
-    print(" \ \    / /  ____| \ | |/ __ \|  \/  | |__ \ ")
-    print("  \ \  / /| |__  |  \| | |  | | \  / |    ) |")
-    print("   \ \/ / |  __| | . ` | |  | | |\/| |   / / ")
-    print("    \  /  | |____| |\  | |__| | |  | |  / /_ ")
-    print("     \/   |______|_| \_|\____/|_|  |_| |____|" + version)
-    print("                                              by Da-vinci")
-    print("         Proxy Enabled " + " [", proxyenabled, "] ")
-    print("---------------------------------------------------")
-
-
-# main loop code here #
 def main():
     while running is True:
         try:
-            if arg1:
-                pre_run()
-            else:
-                main_menu()
+            main_menu()
         except KeyboardInterrupt or Exception as err:
             print(err)
             exit()
-# main loop code ends #
 
 
-def load_dorks():
-    try:
-        d0rk = [line.strip() for line in open("lists/d0rks", "r", encoding="utf-8")]
-        header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
-        xsses = [line.strip() for line in open("lists/xsses", "r", encoding="utf-8")]
-        lfis = [line.strip() for line in open("lists/pathtotest_huge.txt", "r", encoding="utf-8")]
-        tables = [line.strip() for line in open("lists/tables", "r", encoding="utf-8")]
-        columns = [line.strip() for line in open("lists/columns", "r", encoding="utf-8")]
-        search_Ignore = str([line.strip() for line in open("lists/ignore", "r", encoding="utf-8")])
-        random.shuffle(d0rk)
-        random.shuffle(header)
-        random.shuffle(lfis)
-    except Exception as err:
-        print(err)
-        exit()
+class scanning:
+    def __init__(self):
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.arg3 = arg3
 
-
-def main_menu():
-    logo()
-    print("[1] Dork and Vuln Scan")
-    print("[2] Admin page finder")
-    print("[3] Enable Tor/Proxy Support")
-    print("[4] Cloudflare Resolving")
-    print("[5] Misc Options")
-    print("[6] Exit\n")
-    chce = input(":")
-
+    def scan(self, arg1, arg2, arg3):
+        if len(arg1) > 0:
+            pass
+        else:
+        sites = input('\nChoose your target(domain) for example ".com"\r\n :')
+        sitearray = [sites]
+        dorks = input("Choose the number of random dorks (0 for all.. may take awhile!) : ")
 
 # main program code here #
 if __name__ == "__main__":
     running = True
-    if sys.argv[1]:
-        try:
-            func = str(sys.argv[1])
-            arg1 = str(sys.argv[2])
-            arg2 = sys.argv[3]
-            arg3 = sys.argv[4]
-            pre_run()
-        except Exception as err:
-            print(err)
-            usage()
+    print(sys.argv)
+    if len(sys.argv) >= 2:
+            try:
+                func = str(sys.argv[1])
+                arg1 = str(sys.argv[2])
+                arg2 = sys.argv[3]
+                arg3 = sys.argv[4]
+                pre_run()
+            except Exception as err:
+                print(err)
+                usage()
     else:
         main()
