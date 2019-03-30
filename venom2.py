@@ -12,21 +12,21 @@ import re
 version = '.0.1'
 proxyenabled = False
 
-def load_dorks(self):
-    try:
-        d0rk = [line.strip() for line in open("lists/d0rks", "r", encoding="utf-8")]
-        header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
-        xsses = [line.strip() for line in open("lists/xsses", "r", encoding="utf-8")]
-        lfis = [line.strip() for line in open("lists/pathto_huge.txt", "r", encoding="utf-8")]
-        tables = [line.strip() for line in open("lists/tables", "r", encoding="utf-8")]
-        columns = [line.strip() for line in open("lists/columns", "r", encoding="utf-8")]
-        search_Ignore = [line.strip() for line in open("lists/ignore", "r", encoding="utf-8")]
-        random.shuffle(d0rk)
-        random.shuffle(header)
-        random.shuffle(lfis)
-    except Exception as err:
-        print(err)
-        exit()
+try:
+    d0rk = [line.strip() for line in open("lists/d0rks", "r", encoding="utf-8")]
+    header = [line.strip() for line in open("lists/header", "r", encoding="utf-8")]
+    xsses = [line.strip() for line in open("lists/xsses", "r", encoding="utf-8")]
+    lfis = [line.strip() for line in open("lists/pathto_huge.txt", "r", encoding="utf-8")]
+    tables = [line.strip() for line in open("lists/tables", "r", encoding="utf-8")]
+    columns = [line.strip() for line in open("lists/columns", "r", encoding="utf-8")]
+    search_Ignore = [line.strip() for line in open("lists/ignore", "r", encoding="utf-8")]
+    random.shuffle(d0rk)
+    random.shuffle(header)
+    random.shuffle(lfis)
+except Exception as err:
+    print(err)
+    exit()
+
 
 class menus:
     def __init__(self):
@@ -168,12 +168,10 @@ class scanning:
                         self.crawled_sites.append(loop.run_in_executor(None, self.ignoringGet, self.crawled_sites))
                     stringreg = re.compile('(?<=href=")(.*?)(?=")')
                     for site in self.crawled_sites:
-                        for i in search_Ignore:
+                        for i in self.search_Ignore:
                             basename = re.search(r"(?<=(://))[^/]*(?=/)", site)
-                            if ((basename is None) or re.search("google", site)
-    
-                            ):
-                                basename = re.search(r"(?<=://).*", name)
+                            if ((basename is None) or re.search(i, site)):
+                                basename = re.search(r"(?<=://).*", i)
                             if basename is not None:
                                 basename = basename.group(0)
                             if basename not in domains and basename is not None:
