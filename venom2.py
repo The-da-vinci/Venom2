@@ -1,13 +1,16 @@
 #!/usr/bin/python3
 
-import threading
-import random
-import sys
-import os
 import asyncio
-from datetime import datetime
-import requests
+import os
+import random
 import re
+import sys
+import threading
+from datetime import datetime
+
+import requests
+
+from API import socks
 
 version = ".0.1"
 proxyenabled = False
@@ -16,28 +19,13 @@ testing = True
 try:
     full_path = os.path.realpath(__file__)
     path, filename = os.path.split(full_path)
-    dorks = [
-        line.strip() for line in open(path + "\\lists\\d0rks", "r", encoding="utf-8")
-    ]
-    header = [
-        line.strip() for line in open(path + "\\lists\\header", "r", encoding="utf-8")
-    ]
-    xsses = [
-        line.strip() for line in open(path + "\\lists\\xsses", "r", encoding="utf-8")
-    ]
-    lfis = [
-        line.strip()
-        for line in open(path + "\\lists\\pathto_huge.txt", "r", encoding="utf-8")
-    ]
-    tables = [
-        line.strip() for line in open(path + "\\lists\\tables", "r", encoding="utf-8")
-    ]
-    columns = [
-        line.strip() for line in open(path + "\\lists\\columns", "r", encoding="utf-8")
-    ]
-    search_Ignore = [
-        line.strip() for line in open(path + "\\lists\\ignore", "r", encoding="utf-8")
-    ]
+    dorks = [line.strip() for line in open(path + "\\lists\\d0rks", "r", encoding="utf-8")]
+    header = [line.strip() for line in open(path + "\\lists\\header", "r", encoding="utf-8")]
+    xsses = [line.strip() for line in open(path + "\\lists\\xsses", "r", encoding="utf-8")]
+    lfis = [line.strip() for line in open(path + "\\lists\\pathto_huge.txt", "r", encoding="utf-8")]
+    tables = [line.strip() for line in open(path + "\\lists\\tables", "r", encoding="utf-8")]
+    columns = [line.strip() for line in open(path + "\\lists\\columns", "r", encoding="utf-8")]
+    search_Ignore = [line.strip() for line in open(path + "\\lists\\ignore", "r", encoding="utf-8")]
     random.shuffle(dorks)
     random.shuffle(header)
     random.shuffle(lfis)
@@ -83,7 +71,7 @@ class menus:
 
     def main_menu(self):
         if testing is True:
-            self.s.scan()
+            pass
         self.logo()
         print("[1] Dork and Vuln Scan")
         print("[2] Enable Tor/Proxy Support")
@@ -94,13 +82,66 @@ class menus:
         if choice == 1:
             self.s.scan()
         if choice == 2:
-            pass
+            self.Configure_proxy()
         if choice == 3:
             pass
         if choice == 4:
             pass
         if choice == 5:
             exit()
+
+    def Configure_proxy(self):
+        global proxyenabled
+        try:
+            proxy_type = str(input("Is the proxy socks4 or socks5?\n"))
+            proxy_ip = str(input("Please enter the proxy ip\n:"))
+            proxy_port = int(input("Proxy port? for example tor socks default port is 9050\n:"))
+            username = str(input("Proxy username? Leave blank if not required \n:"))
+            password = str(input("Proxy password? Leave blank if not required \n:"))
+            if proxy_type == "socks4":
+                try:
+                    if (username == "") and (password == ""):
+                        socks.setdefaultproxy(
+                            socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port, username, password
+                        )
+                        print("Socks4 proxy enabled successfully!")
+                        ProxyEnabled = "True"
+                except Exception as err:
+                    print(err)
+            elif proxy_type == "socks4":
+                try:
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port)
+                    socks.socket = socks.socksocket
+                    print("Socks4 proxy enabled successfully!")
+                    ProxyEnabled = "True"
+                    self.main_menu()
+                except Exception as err:
+                    print(err)
+            if proxy_type == "socks5":
+                try:
+                    if (username == "") and (password == ""):
+                        socks.setdefaultproxy(
+                            socks.PROXY_TYPE_SOCKS5, proxy_ip, proxy_port, username, password
+                        )
+                        print("Socks5 proxy enabled successfully!")
+                        ProxyEnabled = "True"
+                        self.main_menu()
+                except Exception as err:
+                    print(err)
+            elif proxy_type == "socks5":
+                try:
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port)
+                    socks.socket = socks.socksocket
+                    print("Socks5 proxy enabled successfully!")
+                    ProxyEnabled = "True"
+                    self.main_menu()
+                except Exception as err:
+                    print(err)
+            if "socks4" not in proxy_type and "socks5" not in proxy_type:
+                print("Unknown choice, retuning to main menu.")
+        except Exception as err:
+            print(err)
+            return
 
 
 def main():
@@ -188,16 +229,15 @@ class scanner:
         ]
 
     def scan(self):
+        global proxyenabled
         try:
             if len(sys.argv) > 1:
                 pass
             else:
                 if testing is True:
-                    self.tld = '.com'
+                    self.tld = ".com"
                 else:
-                    self.tld = input(
-                        '\nChoose your target domain or a search word ("*.com")\r\n:'
-                    )
+                    self.tld = input('\nChoose your target domain or a search word ("*.com")\r\n:')
                 self.sitearray = [self.tld]
                 if testing is True:
                     dork_count = 10
@@ -224,9 +264,7 @@ class scanner:
                 if testing is True:
                     self.Number_of_pages = 5
                 else:
-                    self.Number_of_pages = int(
-                        input("Enter number of pages to go through\n:")
-                    )
+                    self.Number_of_pages = int(input("Enter number of pages to go through\n:"))
                 self.loop = asyncio.get_event_loop()
                 self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
@@ -251,9 +289,7 @@ class scanner:
                     )
                     page += 1
                     if Search_query is not None:
-                        futures.append(
-                            loop.run_in_executor(None, self.checkdead, Search_query)
-                        )
+                        futures.append(loop.run_in_executor(None, self.checkdead, Search_query))
                 stringreg = re.compile('(?<=href=")(http.*?)(?=")')
                 urls = []
                 domains = set()
@@ -275,13 +311,11 @@ class scanner:
                         domains.add(basename)
                         self.Final_list.append(url)
                     else:
-                        if (basename not in urls):
+                        if basename not in urls:
                             urls.append(url)
                 m = menus()
                 m.logo()
-                percent = int(
-                    (1 * self.progress / int(len(self.dorks_in_memory))) * 100
-                )
+                percent = int((1 * self.progress / int(len(self.dorks_in_memory))) * 100)
                 start_time = datetime.now()
                 timeduration = start_time - timestart
                 ticktock = timeduration.seconds
@@ -301,7 +335,7 @@ class scanner:
                         len(self.dorks_in_memory),
                         percent,
                         dork,
-                        "%s:%s:%s" % (hours, minutes, seconds)
+                        "%s:%s:%s" % (hours, minutes, seconds),
                     )
                 )
         print(self.Final_list)
