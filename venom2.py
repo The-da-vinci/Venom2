@@ -11,6 +11,7 @@ import re
 
 version = ".0.1"
 proxyenabled = False
+testing = True
 
 try:
     full_path = os.path.realpath(__file__)
@@ -81,6 +82,8 @@ class menus:
     #            self.s.scan(arg1, arg2, arg3)
 
     def main_menu(self):
+        if testing is True:
+            self.s.scan()
         self.logo()
         print("[1] Dork and Vuln Scan")
         print("[2] Enable Tor/Proxy Support")
@@ -189,11 +192,17 @@ class scanner:
             if len(sys.argv) > 1:
                 pass
             else:
-                self.tld = input(
-                    '\nChoose your target domain or a search word ("*.com")\r\n:'
-                )
+                if testing is True:
+                    self.tld = '.com'
+                else:
+                    self.tld = input(
+                        '\nChoose your target domain or a search word ("*.com")\r\n:'
+                    )
                 self.sitearray = [self.tld]
-                dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
+                if testing is True:
+                    dork_count = 10
+                else:
+                    dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
                 try:
                     if dork_count == 0:
                         i = 0
@@ -208,10 +217,16 @@ class scanner:
                 except Exception as err:
                     print(err)
                     return
-                self.Threads = int(input("How many threads do you want to use?\n:"))
-                self.Number_of_pages = int(
-                    input("Enter number of pages to go through\n:")
-                )
+                if testing is True:
+                    self.Threads = 50
+                else:
+                    self.Threads = int(input("How many threads do you want to use?\n:"))
+                if testing is True:
+                    self.Number_of_pages = 5
+                else:
+                    self.Number_of_pages = int(
+                        input("Enter number of pages to go through\n:")
+                    )
                 self.loop = asyncio.get_event_loop()
                 self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
@@ -227,7 +242,7 @@ class scanner:
                 while page < self.Number_of_pages:
                     loop = asyncio.get_event_loop()
                     futures = []
-                    Results = (
+                    Search_query = (
                         "http://www.bing.com/search?q="
                         + query
                         + "&go=Submit&first="
@@ -235,25 +250,33 @@ class scanner:
                         + "&count=50"
                     )
                     page += 1
-                    if Results is not None:
+                    if Search_query is not None:
                         futures.append(
-                            loop.run_in_executor(None, self.checkdead, Results)
+                            loop.run_in_executor(None, self.checkdead, Search_query)
                         )
-                stringreg = re.compile('(?<=href=")(.*?)(?=")')
+                stringreg = re.compile('(?<=href=")(http.*?)(?=")')
+                urls = []
+                domains = set()
                 for future in futures:
                     result = await future
                     self.crawled_sites.extend(stringreg.findall(result))
-                domains = set()
                 for url in self.crawled_sites:
+                    basename = re.search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
+                    basename = basename.group(0)
+                    dont_append_url = False
                     for i in search_Ignore:
-                        basename = re.search(r"(?<=(://))[^/]*(?=/)", url)
-                        if (basename is None) or re.search(i, url):
-                            basename = re.search(r"(?<=://).*", i)
-                        if basename is not None:
-                            basename = basename.group(0)
-                        if basename not in self.Final_list and basename is not None:
-                            domains.add(basename)
-                            self.Final_list.append(url)
+                        if (basename is None) or re.search(i, basename):
+                            dont_append_url = True
+                            break
+                    # still gives double urls
+                    # basename =/= name in domains
+                    # gotta figure out why later
+                    if (basename not in domains) and (dont_append_url is not True):
+                        domains.add(basename)
+                        self.Final_list.append(url)
+                    else:
+                        if (basename not in urls):
+                            urls.append(url)
                 m = menus()
                 m.logo()
                 percent = int(
@@ -282,7 +305,7 @@ class scanner:
                     )
                 )
         print(self.Final_list)
-    
+
     def checkdead(self, url):
         try:
             response = requests.get(url, timeout=2)
