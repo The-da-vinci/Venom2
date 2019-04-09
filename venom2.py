@@ -39,9 +39,6 @@ except Exception as err:
 
 
 class menus:
-    def __init__(self):
-        self.s = scanner()
-
     def usage():
         print("usage: ./venom2.py <function> <arg1> <arg2> <arg3>")
         print("dorkscan: ./venom2.py scan 'ending' dorks threads")
@@ -60,13 +57,6 @@ class menus:
         print("         Proxy Enabled " + " [", proxyenabled, "] ")
         print("---------------------------------------------------")
 
-    #    def pre_run(self):
-    #        if func == 'scan':
-    #            ending = arg1
-    #            dorks = arg2
-    #            threads = arg3
-    #            self.s.scan(arg1, arg2, arg3)
-
     def main_menu(self):
         self.logo()
         print("[1] Dork and Vuln Scan")
@@ -76,8 +66,10 @@ class menus:
         print("[5] Exit\n")
         choice = input(":")
         if choice == "1":
-            self.s.scan()
+            s = scanner()
+            s.scan()
         if choice == "2":
+            p = proxy()
             p.Update_proxy()
         if choice == "3":
             pass
@@ -88,43 +80,13 @@ class menus:
 
 
 class proxy:
-    def __init__(self, **kwargs):
+    def __init__(self):
         self.proxy_type = ""
         self.proxy_ip = ""
         self.proxy_port = ""
         self.username = ""
         self.password = ""
         self.proxy_conf = ""
-        if "proxy_type" in kwargs:
-            self.proxy_type = kwargs.get("proxy_type")
-        if "proxy_ip" in kwargs:
-            self.proxy_ip = kwargs.get("proxy_ip")
-        if "proxy_port" in kwargs:
-            self.proxy_port = kwargs.get("proxy_port")
-        if "username" in kwargs:
-            self.username = kwargs.get("username")
-        if "password" in kwargs:
-            self.password = kwargs.get("password")
-        if self.proxy_type and self.proxy_ip and self.proxy_port:
-            self.proxy_conf = "{}://{}:{}".format(self.proxy_type, self.proxy_ip, self.proxy_port)
-            Proxies["http"] = self.proxy_conf
-            Proxies["https"] = self.proxy_conf
-            print("%s proxy enabled!" % self.proxy_type)
-            return
-        elif (
-            self.proxy_type
-            and self.proxy_ip
-            and self.proxy_port
-            and self.username
-            and self.password
-        ):
-            self.proxy_conf = "{}://{}:{}@{}:{}".format(
-                self.proxy_type, self.username, self.password, self.proxy_ip, self.proxy_port
-            )
-            Proxies["http"] = self.proxy_conf
-            Proxies["https"] = self.proxy_conf
-            print("%s proxy enabled!" % self.proxy_type)
-            return
 
     def proxy_main_menu(self):
         print("[1] Set proxy")
@@ -162,7 +124,6 @@ class proxy:
                 proxyenabled = True
                 Proxies["http"] = proxy_conf
                 Proxies["https"] = proxy_conf
-                print(proxy_conf, Proxies)
                 print("%s proxy enabled!" % self.proxy_type)
             elif len(self.username) >= 1 and len(self.password) >= 1:
                 proxy_conf = "{}://{}:{}@{}:{}".format(
@@ -171,7 +132,6 @@ class proxy:
                 proxyenabled = True
                 Proxies["http"] = proxy_conf
                 Proxies["https"] = proxy_conf
-                print(proxy_conf, Proxies)
                 print("%s proxy enabled!" % self.proxy_type)
         except Exception as err:
             print(err)
@@ -258,122 +218,133 @@ class scanner:
             "Input String Error",
         ]
 
-    def scan(self):
+    def scan(self, **kwargs):
         global proxyenabled
+
         try:
-            if len(sys.argv) > 1:
-                pass
+            if "target" in kwargs:
+                self.tld = kwargs.get("target")
             else:
-                if testing is True:
-                    self.tld = ".com"
+                self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
+            if "dorks" in kwargs:
+                dork_count = kwargs.get("dorks")
+            else:
+                dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
+            try:
+                if dork_count == 0:
+                    i = 0
+                    while i < dork_count:
+                        self.dorks_in_memory.append(dorks[i])
+                        i += 1
                 else:
-                    self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
-                self.sitearray = [self.tld]
-                if testing is True:
-                    dork_count = 10
-                else:
-                    dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
-                try:
-                    if dork_count == 0:
-                        i = 0
-                        while i < dork_count:
-                            self.dorks_in_memory.append(dorks[i])
-                            i += 1
-                    else:
-                        i = 0
-                        while i < dork_count:
-                            self.dorks_in_memory.append(dorks[i])
-                            i += 1
-                except Exception as err:
-                    print(err)
-                    return
-                if testing is True:
-                    self.Threads = 50
-                else:
-                    self.Threads = int(input("How many threads do you want to use?\n:"))
-                if testing is True:
-                    self.Number_of_pages = 5
-                else:
-                    self.Number_of_pages = int(input("Enter number of pages to go through\n:"))
-                self.loop = asyncio.get_event_loop()
-                self.usearch = self.loop.run_until_complete(self.crawl())
+                    i = 0
+                    while i < dork_count:
+                        self.dorks_in_memory.append(dorks[i])
+                        i += 1
+            except Exception as err:
+                print(err)
+                return
+            if "threads" in kwargs:
+                Threads = kwargs.get("threads")
+            else:
+                self.Threads = int(input("How many threads do you want to use?\n:"))
+            if "pages" in kwargs:
+                self.Number_of_pages = kwargs.get("pages")
+            else:
+                self.Number_of_pages = int(input("Enter number of pages to go through\n:"))
+            self.loop = asyncio.get_event_loop()
+            self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
             exit()
 
     async def crawl(self):
         timestart = datetime.now()
-        for site in self.sitearray:
-            for dork in self.dorks_in_memory:
-                self.progress += 1
-                page = 0
-                query = "{}+site:{}".format(dork, site)
-                while page < self.Number_of_pages:
-                    loop = asyncio.get_event_loop()
-                    futures = []
-                    Search_query = (
-                        "http://www.bing.com/search?q="
-                        + query
-                        + "&go=Submit&first="
-                        + str(page * 50 + 1)
-                        + "&count=50"
-                    )
-                    page += 1
-                    if Search_query is not None:
-                        futures.append(loop.run_in_executor(None, self.Send_Request, Search_query))
-                stringreg = re.compile("(?<=href=')(http.*?)(?=')")
-                urls = []
-                domains = set()
-                for future in futures:
-                    result = await future
-                    self.crawled_sites.extend(stringreg.findall(result))
-                for url in self.crawled_sites:
-                    basename = re.search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
-                    basename = basename.group(0)
-                    dont_append_url = False
-                    for i in search_Ignore:
-                        if (basename is None) or re.search(i, basename):
-                            dont_append_url = True
-                            break
-                    # still gives double urls
-                    # basename =/= name in domains
-                    # gotta figure out why later
-                    if (basename not in domains) and (dont_append_url is not True):
-                        domains.add(basename)
-                        self.Final_list.append(url)
-                    else:
-                        if basename not in urls:
-                            urls.append(url)
-                m = menus()
-                m.logo()
-                percent = int((1 * self.progress / int(len(self.dorks_in_memory))) * 100)
-                start_time = datetime.now()
-                timeduration = start_time - timestart
-                ticktock = timeduration.seconds
-                hours, remainder = divmod(ticktock, 3600)
-                minutes, seconds = divmod(remainder, 60)
-                print(
-                    "| Target: <%s> \r\n"
-                    "| Collected urls: <%s> \r\n"
-                    "| D0rks: <%s/%s> Progressed so far \r\n"
-                    "| Percent Done: <%s> \r\n"
-                    "| Dork In Progress: %s \r\n"
-                    "| Elapsed Time: <%s> \r\n"
-                    % (
-                        self.tld,
-                        len(self.Final_list),
-                        self.progress,
-                        len(self.dorks_in_memory),
-                        percent,
-                        dork,
-                        "%s:%s:%s" % (hours, minutes, seconds),
-                    )
+        for dork in self.dorks_in_memory:
+            self.progress += 1
+            page = 0
+            query = "{}+site:{}".format(dork, self.tld)
+            while page < self.Number_of_pages:
+                loop = asyncio.get_event_loop()
+                futures = []
+                Search_query = (
+                    "http://www.bing.com/search?q="
+                    + query
+                    + "&go=Submit&first="
+                    + str(page * 50 + 1)
+                    + "&count=50"
                 )
+                page += 1
+                if Search_query is not None:
+                    futures.append(loop.run_in_executor(None, self.Send_Request, Search_query))
+            stringreg = re.compile("(?<=href=')(http.*?)(?=')")
+            urls = []
+            domains = set()
+            for future in futures:
+                result = await future
+                self.crawled_sites.extend(stringreg.findall(result))
+            for url in self.crawled_sites:
+                basename = re.search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
+                basename = basename.group(0)
+                dont_append_url = False
+                for i in search_Ignore:
+                    if (basename is None) or re.search(i, basename):
+                        dont_append_url = True
+                        break
+                # still gives double urls
+                # basename =/= name in domains
+                # gotta figure out why later
+                if (basename not in domains) and (dont_append_url is not True):
+                    domains.add(basename)
+                    self.Final_list.append(url)
+                else:
+                    if basename not in urls:
+                        urls.append(url)
+            m = menus()
+            m.logo()
+            percent = int((1 * self.progress / int(len(self.dorks_in_memory))) * 100)
+            start_time = datetime.now()
+            timeduration = start_time - timestart
+            ticktock = timeduration.seconds
+            hours, remainder = divmod(ticktock, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            print(
+                "| Target: <%s> \r\n"
+                "| Collected urls: <%s> \r\n"
+                "| D0rks: <%s/%s> Progressed so far \r\n"
+                "| Percent Done: <%s> \r\n"
+                "| Dork In Progress: %s \r\n"
+                "| Elapsed Time: <%s> \r\n"
+                % (
+                    self.tld,
+                    len(self.Final_list),
+                    self.progress,
+                    len(self.dorks_in_memory),
+                    percent,
+                    dork,
+                    "%s:%s:%s" % (hours, minutes, seconds),
+                )
+            )
         print(self.Final_list)
 
-    def Send_Request(self, search_query):
+    def Send_Request(self, Search_query):
+        response = {"text": ""}
+        global proxyenabled
         try:
-            response = requests.get(search_query, timeout=2)
-            response.raise_for_status()
+            if proxyenabled is True:
+                if Proxies.get("http") is not "":
+                    print(Search_query)
+                    response = requests.get(Search_query, proxies=Proxies, timeout=2)
+                    response.raise_for_status()
+                else:
+                    check_if_dead_proxy = input("the proxy server might have died, continue y/N")
+                    if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
+                        exit(0)
+                    if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
+                        proxyenabled = False
+
+            else:
+                response = requests.get(Search_query, timeout=2)
+                response.raise_for_status()
         except Exception as err:
             print(err)
         finally:
@@ -388,20 +359,38 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p",
         "--proxy",
+        nargs="?",
         type=str,
-        default="socks5://127.0.0.1:9050",
-        required=False,
-        nargs='*',
-        help="Enable proxy, default is TOR proxy ie. socks5://ip:port"
+        const="socks5://127.0.0.1:9050",
+        help="Enable proxy, default is TOR proxy socks5://127.0.0.1:9050",
     )
-    parser.add_argument("-v", "--verbosity", action="store_true", help="increase output verbosity")
+    parser.add_argument("-t", "--target", type=str, help="Targeted Top Level Domain")
+    parser.add_argument(
+        "-T", "--threads", nargs="?", const=10, type=int, help="Amount of threads, Default 10"
+    )
+    parser.add_argument("-d", "--dorks", type=int, help="amount of dorks")
+    parser.add_argument("-P", "--pages", type=int, help="Number of pages to go through")
     args = parser.parse_args()
     if args.proxy:
-        print(args.proxy)
         Proxies["http"] = args.proxy
         Proxies["https"] = args.proxy
         proxyenabled = True
-        print(Proxies)
+    if args.target and args.threads and args.dorks and args.pages:
+        print(
+            "target:"
+            + args.target
+            + "threads:"
+            + str(args.threads)
+            + "dorks:"
+            + str(args.dorks)
+            + "pages:"
+            + str(args.pages)
+        )
+        s = scanner()
+        s.scan(target=args.target, threads=args.threads, dorks=args.dorks, pages=args.pages)
+    if testing is True:
+        s = scanner()
+        s.scan(target="com", threads=50, dorks=10, pages=10)
     m = menus()
     running = True
     main()
