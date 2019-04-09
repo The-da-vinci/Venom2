@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import asyncio
 import os
 import random
@@ -15,6 +16,9 @@ from API import socks
 version = ".0.1"
 proxyenabled = False
 testing = True
+http_proxy = ""
+https_proxy = ""
+Proxies = {"http": "", "https": ""}
 
 try:
     full_path = os.path.realpath(__file__)
@@ -36,13 +40,7 @@ except Exception as err:
 
 class menus:
     def __init__(self):
-        if len(sys.argv) > 2:
-            self.tld = sys.argv[1]
-            self.dorks = sys.argv[2]
-            self.threads = sys.argv[3]
-            self.s = scanner()
-        else:
-            self.s = scanner()
+        self.s = scanner()
 
     def usage():
         print("usage: ./venom2.py <function> <arg1> <arg2> <arg3>")
@@ -70,75 +68,111 @@ class menus:
     #            self.s.scan(arg1, arg2, arg3)
 
     def main_menu(self):
-        if testing is True:
-            pass
         self.logo()
         print("[1] Dork and Vuln Scan")
         print("[2] Enable Tor/Proxy Support")
         print("[3] Cloudflare Resolving")
         print("[4] Misc Options")
         print("[5] Exit\n")
-        choice = int(input(":"))
-        if choice == 1:
+        choice = input(":")
+        if choice == "1":
             self.s.scan()
-        if choice == 2:
-            self.Configure_proxy()
-        if choice == 3:
+        if choice == "2":
+            p.Update_proxy()
+        if choice == "3":
             pass
-        if choice == 4:
+        if choice == "4":
             pass
-        if choice == 5:
+        if choice == "5":
             exit()
 
-    def Configure_proxy(self):
-        global proxyenabled
+
+class proxy:
+    def __init__(self, **kwargs):
+        self.proxy_type = ""
+        self.proxy_ip = ""
+        self.proxy_port = ""
+        self.username = ""
+        self.password = ""
+        self.proxy_conf = ""
+        if "proxy_type" in kwargs:
+            self.proxy_type = kwargs.get("proxy_type")
+        if "proxy_ip" in kwargs:
+            self.proxy_ip = kwargs.get("proxy_ip")
+        if "proxy_port" in kwargs:
+            self.proxy_port = kwargs.get("proxy_port")
+        if "username" in kwargs:
+            self.username = kwargs.get("username")
+        if "password" in kwargs:
+            self.password = kwargs.get("password")
+        if self.proxy_type and self.proxy_ip and self.proxy_port:
+            self.proxy_conf = "{}://{}:{}".format(self.proxy_type, self.proxy_ip, self.proxy_port)
+            Proxies["http"] = self.proxy_conf
+            Proxies["https"] = self.proxy_conf
+            print("%s proxy enabled!" % self.proxy_type)
+            return
+        elif (
+            self.proxy_type
+            and self.proxy_ip
+            and self.proxy_port
+            and self.username
+            and self.password
+        ):
+            self.proxy_conf = "{}://{}:{}@{}:{}".format(
+                self.proxy_type, self.username, self.password, self.proxy_ip, self.proxy_port
+            )
+            Proxies["http"] = self.proxy_conf
+            Proxies["https"] = self.proxy_conf
+            print("%s proxy enabled!" % self.proxy_type)
+            return
+
+    def proxy_main_menu(self):
+        print("[1] Set proxy")
+        print("[2] Update proxy")
+        print("[3] Remove proxy")
+        print("[5] Back to main menu")
+        proxy_choice = input(":")
+        if proxy_choice == "1":
+            self.Update_proxy()
+        if proxy_choice == "2":
+            self.Update_proxy()
+        if proxy_choice == "3":
+            self.Remove_proxy()
+        if proxy_choice == "4":
+            return
+
+    def Update_proxy(self):
         try:
-            proxy_type = str(input("Is the proxy socks4 or socks5?\n"))
-            proxy_ip = str(input("Please enter the proxy ip\n:"))
-            proxy_port = int(input("Proxy port? for example tor socks default port is 9050\n:"))
-            username = str(input("Proxy username? Leave blank if not required \n:"))
-            password = str(input("Proxy password? Leave blank if not required \n:"))
-            if proxy_type == "socks4":
-                try:
-                    if (username == "") and (password == ""):
-                        socks.setdefaultproxy(
-                            socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port, username, password
-                        )
-                        print("Socks4 proxy enabled successfully!")
-                        ProxyEnabled = "True"
-                except Exception as err:
-                    print(err)
-            elif proxy_type == "socks4":
-                try:
-                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port)
-                    socks.socket = socks.socksocket
-                    print("Socks4 proxy enabled successfully!")
-                    ProxyEnabled = "True"
-                    self.main_menu()
-                except Exception as err:
-                    print(err)
-            if proxy_type == "socks5":
-                try:
-                    if (username == "") and (password == ""):
-                        socks.setdefaultproxy(
-                            socks.PROXY_TYPE_SOCKS5, proxy_ip, proxy_port, username, password
-                        )
-                        print("Socks5 proxy enabled successfully!")
-                        ProxyEnabled = "True"
-                        self.main_menu()
-                except Exception as err:
-                    print(err)
-            elif proxy_type == "socks5":
-                try:
-                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, proxy_ip, proxy_port)
-                    socks.socket = socks.socksocket
-                    print("Socks5 proxy enabled successfully!")
-                    ProxyEnabled = "True"
-                    self.main_menu()
-                except Exception as err:
-                    print(err)
-            if "socks4" not in proxy_type and "socks5" not in proxy_type:
+            if testing is not True:
+                self.proxy_type = input("Is the proxy socks4 or socks5?\n:")
+                self.proxy_ip = input("Please enter the proxy ip\n:")
+                self.proxy_port = input("Proxy port? for example tor socks default port is 9050\n:")
+                self.username = input("Proxy username? Leave blank if not required\n:")
+                self.password = input("Proxy password? Leave blank if not required\n:")
+            if testing is True:
+                self.proxy_type = "socks4"
+                self.proxy_ip = "127.0.0.1"
+                self.proxy_port = 9050
+                self.username = ""
+                self.password = ""
+            if "socks4" not in self.proxy_type and "socks5" not in self.proxy_type:
                 print("Unknown choice, retuning to main menu.")
+            if (self.username == "") and (self.password == ""):
+                proxy_conf = "{}://{}:{}".format(self.proxy_type, self.proxy_ip, self.proxy_port)
+                proxyenabled = True
+                Proxies["http"] = proxy_conf
+                Proxies["https"] = proxy_conf
+                print(proxy_conf, Proxies)
+                print("%s proxy enabled!" % self.proxy_type)
+            elif len(self.username) >= 1 and len(self.password) >= 1:
+                proxy_conf = "{}://{}:{}@{}:{}".format(
+                    self.proxy_type, self.username, self.password, self.proxy_ip, self.proxy_port
+                )
+                proxyenabled = True
+                Proxies["http"] = proxy_conf
+                Proxies["https"] = proxy_conf
+                print(proxy_conf, Proxies)
+                print("%s proxy enabled!" % self.proxy_type)
         except Exception as err:
             print(err)
             return
@@ -157,10 +191,6 @@ def main():
 
 class scanner:
     def __init__(self):
-        if len(sys.argv) > 1:
-            self.arg1 = arg1
-            self.arg2 = arg2
-            self.arg3 = arg3
         self.Final_list = []
         self.tld = ""
         self.dorks_in_memory = []
@@ -237,7 +267,7 @@ class scanner:
                 if testing is True:
                     self.tld = ".com"
                 else:
-                    self.tld = input('\nChoose your target domain or a search word ("*.com")\r\n:')
+                    self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
                 self.sitearray = [self.tld]
                 if testing is True:
                     dork_count = 10
@@ -289,8 +319,8 @@ class scanner:
                     )
                     page += 1
                     if Search_query is not None:
-                        futures.append(loop.run_in_executor(None, self.checkdead, Search_query))
-                stringreg = re.compile('(?<=href=")(http.*?)(?=")')
+                        futures.append(loop.run_in_executor(None, self.Send_Request, Search_query))
+                stringreg = re.compile("(?<=href=')(http.*?)(?=')")
                 urls = []
                 domains = set()
                 for future in futures:
@@ -340,30 +370,38 @@ class scanner:
                 )
         print(self.Final_list)
 
-    def checkdead(self, url):
+    def Send_Request(self, search_query):
         try:
-            response = requests.get(url, timeout=2)
+            response = requests.get(search_query, timeout=2)
             response.raise_for_status()
-        except Exception as verb:
-            print(str(verb))
+        except Exception as err:
+            print(err)
         finally:
             return response.text
 
 
 # main program code here #
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbosity", action="store_true", help="increase output verbosity")
+    # gotta fix accepting optional
+    parser.add_argument(
+        "-p",
+        "--proxy",
+        type=str,
+        default="socks5://127.0.0.1:9050",
+        required=False,
+        nargs='*',
+        help="Enable proxy, default is TOR proxy ie. socks5://ip:port"
+    )
+    parser.add_argument("-v", "--verbosity", action="store_true", help="increase output verbosity")
+    args = parser.parse_args()
+    if args.proxy:
+        print(args.proxy)
+        Proxies["http"] = args.proxy
+        Proxies["https"] = args.proxy
+        proxyenabled = True
+        print(Proxies)
     m = menus()
     running = True
-    print(sys.argv)
-    if len(sys.argv) >= 2:
-        try:
-            func = str(sys.argv[1])
-            arg1 = str(sys.argv[2])
-            arg2 = sys.argv[3]
-            arg3 = sys.argv[4]
-            # m.pre_run()
-        except Exception as err:
-            print(err)
-            m.usage()
-    else:
-        main()
+    main()
