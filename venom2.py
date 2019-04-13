@@ -1,17 +1,21 @@
 #!/usr/bin/python3
+try:
+    import argparse
+    import asyncio
+    import os
+    import random
+    import re
+    import sys
+    import threading
+    from subprocess import call
 
-import argparse
-import asyncio
-import os
-import random
-import re
-import sys
-import threading
-from datetime import datetime
+    from datetime import datetime
 
-import requests
+    import requests
 
-from API import socks
+    from API import socks
+except Exception as err:
+    print(err)
 
 version = ".0.1"
 proxyenabled = False
@@ -19,23 +23,60 @@ testing = True
 http_proxy = ""
 https_proxy = ""
 Proxies = {"http": "", "https": ""}
+slash = "//"
+clear = ""
+
+if sys.platform == "win32":
+    slash = "\\"
+    clear = "cls"
+elif sys.platform == "linux" or sys.platform == "linux2":
+    slash = "//"
+    clear = "clear"
+else:
+    slash = "//"
+    print("System platform not recognized: %s" % sys.platform)
 
 try:
     full_path = os.path.realpath(__file__)
     path, filename = os.path.split(full_path)
-    dorks = [line.strip() for line in open(path + "\\lists\\d0rks", "r", encoding="utf-8")]
-    header = [line.strip() for line in open(path + "\\lists\\header", "r", encoding="utf-8")]
-    xsses = [line.strip() for line in open(path + "\\lists\\xsses", "r", encoding="utf-8")]
-    lfis = [line.strip() for line in open(path + "\\lists\\pathto_huge.txt", "r", encoding="utf-8")]
-    tables = [line.strip() for line in open(path + "\\lists\\tables", "r", encoding="utf-8")]
-    columns = [line.strip() for line in open(path + "\\lists\\columns", "r", encoding="utf-8")]
-    search_Ignore = [line.strip() for line in open(path + "\\lists\\ignore", "r", encoding="utf-8")]
+    dorks = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "d0rks", "r", encoding="utf-8")
+    ]
+    header = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "header", "r", encoding="utf-8")
+    ]
+    xsses = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "xsses", "r", encoding="utf-8")
+    ]
+    lfis = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "pathto_huge.txt", "r", encoding="utf-8")
+    ]
+    tables = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "tables", "r", encoding="utf-8")
+    ]
+    columns = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "columns", "r", encoding="utf-8")
+    ]
+    search_Ignore = [
+        line.strip()
+        for line in open(path + slash + "lists" + slash + "ignore", "r", encoding="utf-8")
+    ]
     random.shuffle(dorks)
     random.shuffle(header)
     random.shuffle(lfis)
 except Exception as err:
     print(err)
     exit()
+
+
+def clear():
+    call(clear)
 
 
 class menus:
@@ -46,6 +87,7 @@ class menus:
         print("or just ./venom2.py for gui")
 
     def logo(self):
+        clear()
         print("---------------------------------------------------")
         print(" __      ________ _   _  ____  __  __   ___  ")
         print(" \ \    / /  ____| \ | |/ __ \|  \/  | |__ \ ")
@@ -154,6 +196,7 @@ class scanner:
         self.Final_list = []
         self.tld = ""
         self.dorks_in_memory = []
+        self.headers_in_memory = {}
         self.progress = 0
         self.site = ""
         self.time_now = datetime.now()
@@ -255,17 +298,31 @@ class scanner:
             self.loop = asyncio.get_event_loop()
             self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
-            exit()
+            m = menus()
+            m.logo()
+            print("Program Paused")
+            print("[1] Unpause")
+            print("[2] Skip rest of scan and Continue with current results")
+            print("[3] Return to main menu")
+            choise = input(":")
+            if choise == "1":
+                return
+            if choise == "2":
+                pass
+            if choise == "3":
+                m.main_menu()
+            else:
+                pass
 
     async def crawl(self):
         timestart = datetime.now()
+        futures = []
         for dork in self.dorks_in_memory:
             self.progress += 1
             page = 0
             query = "{}+site:{}".format(dork, self.tld)
             while page < self.Number_of_pages:
                 loop = asyncio.get_event_loop()
-                futures = []
                 Search_query = (
                     "http://www.bing.com/search?q="
                     + query
@@ -274,9 +331,9 @@ class scanner:
                     + "&count=50"
                 )
                 page += 1
-                if Search_query is not None:
-                    futures.append(loop.run_in_executor(None, self.Send_Request, Search_query))
-            stringreg = re.compile("(?<=href=')(http.*?)(?=')")
+                future = loop.run_in_executor(None, self.Send_Request, Search_query)
+                futures.append(future)
+            stringreg = re.compile('(?<=href=")(http.*?(?="))')
             urls = []
             domains = set()
             for future in futures:
@@ -324,27 +381,59 @@ class scanner:
                     "%s:%s:%s" % (hours, minutes, seconds),
                 )
             )
-        print(self.Final_list)
+            m.logo()
+            print("\n\nURLS:", len(self.Final_list))
 
-    def Send_Request(self, Search_query):
-        response = {"text": ""}
+    def Testing_done_choise(self):
+        m = menus()
+        m.logo()
+        print("[1] Save URLs to a file")
+        print("[2] Print all URLs")
+        print("[3] Back to main menu")
+        choise = input(":")
+        if choise == "1":
+            print("\nSaving valid URLs (" + str(len(self.Final_list)) + ") to file")
+            filename = input("Filename: ").encode("utf-8")
+            save_file = open(filename, "w", encoding="utf-8")
+            self.Final_list.sort()
+            for url in self.Final_list:
+                save_file.write(url + "\r\n")
+            save_file.close()
+            print("Urls saved to " + filename)
+        elif choise == "2":
+            print("\nPrinting all URLs:\n")
+            self.Final_list.sort()
+            for t in self.Final_list:
+                print(t)
+        elif choise == "4":
+            m.main_menu()
+        else:
+            s.Testing_done_choise()
+
+    def Send_Request(self, url):
         global proxyenabled
+        response = {"text": ""}
         try:
-            if proxyenabled is True:
-                if Proxies.get("http") is not "":
-                    print(Search_query)
-                    response = requests.get(Search_query, proxies=Proxies, timeout=2)
-                    response.raise_for_status()
-                else:
-                    check_if_dead_proxy = input("the proxy server might have died, continue y/N")
-                    if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
-                        exit(0)
-                    if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
-                        proxyenabled = False
-
-            else:
-                response = requests.get(Search_query, timeout=2)
+            if testing is not True:
+                response = requests.get(url, timeout=2)
                 response.raise_for_status()
+                return
+            elif testing is True:
+                if proxyenabled is True:
+                    if Proxies.get("http") is not "":
+                        response = requests.get(url, proxies=Proxies, timeout=2)
+                        response.raise_for_status()
+                    else:
+                        check_if_dead_proxy = input(
+                            "the proxy server might have died, continue y/N"
+                        )
+                        if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
+                            exit(0)
+                        if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
+                            proxyenabled = False
+                else:
+                    response = requests.get(url, timeout=2)
+                    response.raise_for_status()
         except Exception as err:
             print(err)
         finally:
@@ -390,7 +479,9 @@ if __name__ == "__main__":
         s.scan(target=args.target, threads=args.threads, dorks=args.dorks, pages=args.pages)
     if testing is True:
         s = scanner()
-        s.scan(target="com", threads=50, dorks=10, pages=10)
+        Proxies["http"] = "socks5://127.0.0.1:9050"
+        Proxies["https"] = "socks5://127.0.0.1:9050"
+        proxyenabled = True
     m = menus()
     running = True
     main()
