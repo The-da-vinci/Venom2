@@ -1,88 +1,54 @@
 #!/usr/bin/python3
 try:
-    import argparse
+    from argparse import ArgumentParser
     import asyncio
-    import os
-    import random
-    import re
-    import sys
-    import threading
+    from os import path, system
+    from random import shuffle
+    from re import search, compile
+    from sys import platform
     from subprocess import call
-
     from datetime import datetime
-
-    import requests
-
+    from requests import get
     from API import socks
+    from time import time
 except Exception as err:
     print(err)
 
-version = ".0.1"
+version = ".1.0"
 proxyenabled = False
 testing = True
-http_proxy = ""
-https_proxy = ""
 Proxies = {"http": "", "https": ""}
 slash = "//"
-clear = ""
+clr = ""
 
-if sys.platform == "win32":
-    slash = "\\"
-    clear = "cls"
-elif sys.platform == "linux" or sys.platform == "linux2":
-    slash = "//"
-    clear = "clear"
-else:
-    slash = "//"
-    print("System platform not recognized: %s" % sys.platform)
 
-try:
-    full_path = os.path.realpath(__file__)
-    path, filename = os.path.split(full_path)
-    dorks = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "d0rks", "r", encoding="utf-8")
-    ]
-    header = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "header", "r", encoding="utf-8")
-    ]
-    xsses = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "xsses", "r", encoding="utf-8")
-    ]
-    lfis = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "pathto_huge.txt", "r", encoding="utf-8")
-    ]
-    tables = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "tables", "r", encoding="utf-8")
-    ]
-    columns = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "columns", "r", encoding="utf-8")
-    ]
-    search_Ignore = [
-        line.strip()
-        for line in open(path + slash + "lists" + slash + "ignore", "r", encoding="utf-8")
-    ]
-    random.shuffle(dorks)
-    random.shuffle(header)
-    random.shuffle(lfis)
-except Exception as err:
-    print(err)
-    exit()
+def check_platform():
+    global clr
+    global slash
+    if platform == "win32":
+        slash = "\\"
+        clr = "cls"
+    elif platform == "linux" or platform == "linux2":
+        slash = "//"
+        clr = "clear"
+    else:
+        slash = "//"
+        print("System platform not recognized: %s" % platform)
 
 
 def clear():
-    call(clear)
+    if clr == "":
+        return
+    elif clr == "cls":
+        system("cls")
+    elif clr == "clear":
+        system("clear")
 
 
 class menus:
     def usage():
         print("usage: ./venom2.py <function> <arg1> <arg2> <arg3>")
-        print("dorkscan: ./venom2.py scan 'ending' dorks threads")
+        print("dorkscan: ./venom2.py scan 'ending' dorks")
         print("example: ./venom2.py scan '.com' 1000 500")
         print("or just ./venom2.py for gui")
 
@@ -103,9 +69,7 @@ class menus:
         self.logo()
         print("[1] Dork and Vuln Scan")
         print("[2] Enable Tor/Proxy Support")
-        print("[3] Cloudflare Resolving")
-        print("[4] Misc Options")
-        print("[5] Exit\n")
+        print("[3] Exit\n")
         choice = input(":")
         if choice == "1":
             s = scanner()
@@ -114,11 +78,7 @@ class menus:
             p = proxy()
             p.Update_proxy()
         if choice == "3":
-            pass
-        if choice == "4":
-            pass
-        if choice == "5":
-            exit()
+            exit(0)
 
 
 class proxy:
@@ -181,85 +141,38 @@ class proxy:
 
 
 def main():
+    check_platform()
     while running is True:
         try:
             m = menus()
             m.main_menu()
         except KeyboardInterrupt or Exception as err:
             print(err)
-            exit()
+            exit(0)
             datetime.now()
 
 
 class scanner:
     def __init__(self):
+        full_path = path.realpath(__file__)
+        local_path, filename = path.split(full_path)
+        self.dorks = [
+            line.strip()
+            for line in open(local_path + slash + "lists" + slash + "d0rks", "r", encoding="utf-8")
+        ]
+        self.search_ignore = [
+            line.strip()
+            for line in open(local_path + slash + "lists" + slash + "ignore", "r", encoding="utf-8")
+        ]
+        shuffle(self.dorks)
         self.Final_list = []
         self.tld = ""
         self.dorks_in_memory = []
         self.headers_in_memory = {}
-        self.progress = 0
         self.site = ""
         self.time_now = datetime.now()
         self.crawled_sites = []
-        self.vuln_list = [
-            "error in your SQL syntax",
-            "mysql_fetch",
-            "num_rows",
-            "ORA-01756",
-            "Error Executing Database Query",
-            "SQLServer JDBC Driver",
-            "OLE DB Provider for SQL Server",
-            "Unclosed quotation mark",
-            "ODBC Microsoft Access Driver",
-            "Microsoft JET Database",
-            "Error Occurred While Processing Request",
-            "Microsoft JET Database",
-            "Server Error",
-            "ODBC Drivers error",
-            "Invalid Querystring",
-            "OLE DB Provider for ODBC",
-            "VBScript Runtime",
-            "ADODB.Field",
-            "BOF or EOF",
-            "ADODB.Command",
-            "JET Database",
-            "mysql_fetch_array",
-            "Syntax error",
-            "mysql_numrows()",
-            "GetArray()",
-            "FetchRow()",
-            "Input string was not in a correct format",
-        ]
-
-        self.vuln_to = [
-            "MySQL Classic",
-            "MiscError",
-            "MiscError2",
-            "Oracle",
-            "JDBC_CFM",
-            "JDBC_CFM2",
-            "MSSQL_OLEdb",
-            "MSSQL_Uqm",
-            "MS-Access_ODBC",
-            "MS-Access_JETdb",
-            "Processing Request",
-            "MS-Access JetDb",
-            "Server Error",
-            "ODBC Drivers error",
-            "Invalid Querystring",
-            "OLE DB Provider for ODBC",
-            "VBScript Runtime",
-            "ADODB.Field",
-            "BOF or EOF",
-            "ADODB.Command",
-            "JET Database",
-            "mysql_fetch_array",
-            "Syntax error",
-            "mysql_numrows()",
-            "GetArray()",
-            "FetchRow()",
-            "Input String Error",
-        ]
+        self.use_final_list = False
 
     def scan(self, **kwargs):
         global proxyenabled
@@ -274,23 +187,19 @@ class scanner:
             else:
                 dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
             try:
-                if dork_count == 0:
+                if dork_count >= 1:
                     i = 0
                     while i < dork_count:
-                        self.dorks_in_memory.append(dorks[i])
+                        self.dorks_in_memory.append(self.dorks[i])
                         i += 1
                 else:
                     i = 0
                     while i < dork_count:
-                        self.dorks_in_memory.append(dorks[i])
+                        self.dorks_in_memory.append(self.dorks[i])
                         i += 1
             except Exception as err:
                 print(err)
                 return
-            if "threads" in kwargs:
-                Threads = kwargs.get("threads")
-            else:
-                self.Threads = int(input("How many threads do you want to use?\n:"))
             if "pages" in kwargs:
                 self.Number_of_pages = kwargs.get("pages")
             else:
@@ -304,6 +213,7 @@ class scanner:
             print("[1] Unpause")
             print("[2] Skip rest of scan and Continue with current results")
             print("[3] Return to main menu")
+            print("[4] Exit")
             choise = input(":")
             if choise == "1":
                 return
@@ -311,19 +221,22 @@ class scanner:
                 pass
             if choise == "3":
                 m.main_menu()
+            if choise == "4":
+                exit(0)
             else:
                 pass
 
     async def crawl(self):
         timestart = datetime.now()
+        progress = 0
         futures = []
         for dork in self.dorks_in_memory:
-            self.progress += 1
+            progress += 1
             page = 0
             query = "{}+site:{}".format(dork, self.tld)
             while page < self.Number_of_pages:
                 loop = asyncio.get_event_loop()
-                Search_query = (
+                search_query = (
                     "http://www.bing.com/search?q="
                     + query
                     + "&go=Submit&first="
@@ -331,34 +244,27 @@ class scanner:
                     + "&count=50"
                 )
                 page += 1
-                future = loop.run_in_executor(None, self.Send_Request, Search_query)
+                future = loop.run_in_executor(None, self.send_request, search_query)
                 futures.append(future)
-            stringreg = re.compile('(?<=href=")(http.*?(?="))')
+            stringreg = compile('(?<=href=")(http.*?(?="))')
             urls = []
-            domains = set()
+            self.domains = set()
             for future in futures:
                 result = await future
-                self.crawled_sites.extend(stringreg.findall(result))
-            for url in self.crawled_sites:
-                basename = re.search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
-                basename = basename.group(0)
-                dont_append_url = False
-                for i in search_Ignore:
-                    if (basename is None) or re.search(i, basename):
-                        dont_append_url = True
-                        break
-                # still gives double urls
-                # basename =/= name in domains
-                # gotta figure out why later
-                if (basename not in domains) and (dont_append_url is not True):
-                    domains.add(basename)
-                    self.Final_list.append(url)
+                urls.extend(stringreg.findall(result))
+            basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", result)
+            for url in urls:
+                if (
+                    (basename is None)
+                    or "microsoft" in url
+                    or "bing" in url
+                ):
+                    pass
                 else:
-                    if basename not in urls:
-                        urls.append(url)
+                    self.crawled_sites.append(url)
             m = menus()
             m.logo()
-            percent = int((1 * self.progress / int(len(self.dorks_in_memory))) * 100)
+            percent = int((1 * progress / int(len(self.dorks_in_memory))) * 100)
             start_time = datetime.now()
             timeduration = start_time - timestart
             ticktock = timeduration.seconds
@@ -373,34 +279,44 @@ class scanner:
                 "| Elapsed Time: <%s> \r\n"
                 % (
                     self.tld,
-                    len(self.Final_list),
-                    self.progress,
+                    len(self.crawled_sites),
+                    progress,
                     len(self.dorks_in_memory),
                     percent,
                     dork,
                     "%s:%s:%s" % (hours, minutes, seconds),
                 )
             )
-            m.logo()
-            print("\n\nURLS:", len(self.Final_list))
+        print("\n\nURLS:", len(self.crawled_sites))
+        await self.Testing_done_choise()
 
-    def Testing_done_choise(self):
+    async def Testing_done_choise(self):
+        self.use_final_list = False
         m = menus()
         m.logo()
-        print("[1] Save URLs to a file")
-        print("[2] Print all URLs")
-        print("[3] Back to main menu")
+        print("[1] Sort URLs")
+        print("[2] Save URLs to a file")
+        print("[3] Print all URLs")
+        print("[4] Back to main menu")
         choise = input(":")
         if choise == "1":
+            await self.pre_check_url()
+        if choise == "2":
             print("\nSaving valid URLs (" + str(len(self.Final_list)) + ") to file")
             filename = input("Filename: ").encode("utf-8")
             save_file = open(filename, "w", encoding="utf-8")
-            self.Final_list.sort()
-            for url in self.Final_list:
-                save_file.write(url + "\r\n")
-            save_file.close()
+            if self.use_final_list is True:
+                self.Final_list.sort()
+                for url in self.Final_list:
+                    save_file.write(url + "\r\n")
+                save_file.close()
+            else:
+                self.crawled_sites.sort()
+                for url in self.crawled_sites:
+                    save_file.write(url + "\r\n")
+                save_file.close()
             print("Urls saved to " + filename)
-        elif choise == "2":
+        elif choise == "3":
             print("\nPrinting all URLs:\n")
             self.Final_list.sort()
             for t in self.Final_list:
@@ -408,20 +324,80 @@ class scanner:
         elif choise == "4":
             m.main_menu()
         else:
-            s.Testing_done_choise()
+            await self.Testing_done_choise()
 
-    def Send_Request(self, url):
+    async def pre_check_url(self):
+        timestart = datetime.now()
+        futures = []
+        progress = 0
+        loop = asyncio.get_event_loop()
+        for url in self.crawled_sites:
+            for i in self.search_ignore:
+                future = loop.run_in_executor(None, self.check_url, url, i)
+                futures.append(future)
+            for future in futures:
+                counter = len(self.search_ignore)
+                result = await future
+                if result is not None:
+                    break
+                elif counter == 0:
+                    self.Final_list.append(url)
+                    self.use_final_list is True
+
+            m = menus()
+            m.logo()
+            progress += 1
+            percent = int((1 * progress / int(len(self.crawled_sites))) * 100)
+            start_time = datetime.now()
+            timeduration = start_time - timestart
+            ticktock = timeduration.seconds
+            hours, remainder = divmod(ticktock, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            print(
+                "| Collected urls: <%s> \r\n"
+                "| Sorted URLs: <%s> \r\n"
+                "| Sites: <%s/%s> Progressed so far \r\n"
+                "| Percent Done: <%s> \r\n"
+                "| Url In Progress: %s \r\n"
+                "| Elapsed Time: <%s> \r\n"
+                % (
+                    len(self.crawled_sites),
+                    len(self.Final_list),
+                    progress,
+                    len(self.crawled_sites),
+                    percent,
+                    url,
+                    "%s:%s:%s" % (hours, minutes, seconds),
+                )
+            )
+        print("URLs sorted, there are now %s URLs" % len(self.Final_list))
+        return
+
+    def check_url(self, url, check_against):
+        basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
+        if basename is None:
+            return
+        else:
+            basename = basename.group(0)
+        dont_append_url = False
+        if (basename is None) or search(check_against, basename):
+            dont_append_url = True
+        if (basename not in self.domains) and (dont_append_url is not True):
+            self.domains.add(basename)
+            return url
+
+    def send_request(self, url):
         global proxyenabled
         response = {"text": ""}
         try:
             if testing is not True:
-                response = requests.get(url, timeout=2)
+                response = get(url, timeout=2)
                 response.raise_for_status()
                 return
             elif testing is True:
                 if proxyenabled is True:
-                    if Proxies.get("http") is not "":
-                        response = requests.get(url, proxies=Proxies, timeout=2)
+                    if Proxies.get("http") != "":
+                        response = get(url, proxies=Proxies, timeout=2)
                         response.raise_for_status()
                     else:
                         check_if_dead_proxy = input(
@@ -432,17 +408,20 @@ class scanner:
                         if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
                             proxyenabled = False
                 else:
-                    response = requests.get(url, timeout=2)
+                    response = get(url, timeout=2)
                     response.raise_for_status()
         except Exception as err:
             print(err)
         finally:
-            return response.text
+            if response.text == "":
+                return
+            else:
+                return response.text
 
 
 # main program code here #
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument("-v", "--verbosity", action="store_true", help="increase output verbosity")
     # gotta fix accepting optional
     parser.add_argument(
@@ -454,9 +433,6 @@ if __name__ == "__main__":
         help="Enable proxy, default is TOR proxy socks5://127.0.0.1:9050",
     )
     parser.add_argument("-t", "--target", type=str, help="Targeted Top Level Domain")
-    parser.add_argument(
-        "-T", "--threads", nargs="?", const=10, type=int, help="Amount of threads, Default 10"
-    )
     parser.add_argument("-d", "--dorks", type=int, help="amount of dorks")
     parser.add_argument("-P", "--pages", type=int, help="Number of pages to go through")
     args = parser.parse_args()
@@ -464,24 +440,16 @@ if __name__ == "__main__":
         Proxies["http"] = args.proxy
         Proxies["https"] = args.proxy
         proxyenabled = True
-    if args.target and args.threads and args.dorks and args.pages:
-        print(
-            "target:"
-            + args.target
-            + "threads:"
-            + str(args.threads)
-            + "dorks:"
-            + str(args.dorks)
-            + "pages:"
-            + str(args.pages)
-        )
+    if args.target and args.dorks and args.pages:
+        print("target:" + args.target + "dorks:" + str(args.dorks) + "pages:" + str(args.pages))
         s = scanner()
-        s.scan(target=args.target, threads=args.threads, dorks=args.dorks, pages=args.pages)
+        s.scan(target=args.target, dorks=args.dorks, pages=args.pages)
     if testing is True:
-        s = scanner()
-        Proxies["http"] = "socks5://127.0.0.1:9050"
-        Proxies["https"] = "socks5://127.0.0.1:9050"
-        proxyenabled = True
+        # s = scanner()
+        # Proxies["http"] = "socks5://127.0.0.1:9050"
+        # Proxies["https"] = "socks5://127.0.0.1:9050"
+        # proxyenabled = True
+        pass
     m = menus()
     running = True
     main()
