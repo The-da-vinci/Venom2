@@ -16,7 +16,6 @@ except Exception as err:
 
 version = ".1.1"
 proxyenabled = False
-testing = False
 Proxies = {"http": "", "https": ""}
 slash = "//"
 clr = ""
@@ -114,18 +113,11 @@ class proxy:
     def Update_proxy(self):
         global proxyenabled
         try:
-            if testing is not True:
-                self.proxy_type = input("Is the proxy socks4 or socks5?\n:")
-                self.proxy_ip = input("Please enter the proxy ip\n:")
-                self.proxy_port = input("Proxy port? for example tor socks default port is 9050\n:")
-                self.username = input("Proxy username? Leave blank if not required\n:")
-                self.password = input("Proxy password? Leave blank if not required\n:")
-            if testing is True:
-                self.proxy_type = "socks4"
-                self.proxy_ip = "127.0.0.1"
-                self.proxy_port = 9050
-                self.username = ""
-                self.password = ""
+            self.proxy_type = input("Is the proxy socks4 or socks5?\n:")
+            self.proxy_ip = input("Please enter the proxy ip\n:")
+            self.proxy_port = input("Proxy port? for example tor socks default port is 9050\n:")
+            self.username = input("Proxy username? Leave blank if not required\n:")
+            self.password = input("Proxy password? Leave blank if not required\n:")
             if "socks4" not in self.proxy_type and "socks5" not in self.proxy_type:
                 print("Unknown choice, retuning to main menu.")
             if (self.username == "") and (self.password == ""):
@@ -462,13 +454,6 @@ if __name__ == "__main__":
         print("target:" + args.target + "dorks:" + str(args.dorks) + "pages:" + str(args.pages))
         s = scanner()
         s.scan(target=args.target, dorks=args.dorks, pages=args.pages)
-    if testing is not True:
-        # s = scanner()
-        # Proxies["http"] = "socks5://127.0.0.1:9050"
-        # Proxies["https"] = "socks5://127.0.0.1:9050"
-        # proxyenabled = True
-        # s.scan(target='.com', dorks=5, pages=5)
-        pass
     m = menus()
     running = True
     main()
