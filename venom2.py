@@ -1,16 +1,14 @@
 #!/usr/bin/python3
 try:
     from argparse import ArgumentParser
-    import asyncio
+    from asyncio import get_event_loop
     from os import path, system
     from random import shuffle
     from re import search, compile
     from sys import platform
     from subprocess import call
     from datetime import datetime
-
-    # from requests import get
-    import requests
+    from requests import get, status_codes, raise_for_status
     from API import socks
     from time import time
 except Exception as err:
@@ -157,8 +155,8 @@ class proxy:
         global proxyenabled
         try:
             if proxyenabled is True:
-                requests.get("http://google.com", proxies=Proxies, timeout=2)
-                print(requests.status_codes)
+                get("http://google.com", proxies=Proxies, timeout=2)
+                print(status_codes)
                 input("Press Enter to continue...")
             else:
                 print("Proxy is not enabled!")
@@ -234,7 +232,7 @@ class scanner:
                 self.Number_of_pages = kwargs.get("pages")
             else:
                 self.Number_of_pages = int(input("Enter number of pages to go through\n:"))
-            self.loop = asyncio.get_event_loop()
+            self.loop = get_event_loop()
             self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
             m = menus()
@@ -266,7 +264,7 @@ class scanner:
             page = 0
             query = "{}+site:{}".format(dork, self.tld)
             while page < self.Number_of_pages:
-                loop = asyncio.get_event_loop()
+                loop = get_event_loop()
                 search_query = (
                     "http://www.bing.com/search?q="
                     + query
@@ -418,9 +416,9 @@ class scanner:
         try:
             if proxyenabled is True:
                 if Proxies.get("http") != "":
-                    response = requests.get(url, proxies=Proxies, timeout=2)
+                    response = get(url, proxies=Proxies, timeout=2)
                     response.raise_for_status()
-                    print(requests.status_codes)
+                    print(status_codes)
                 else:
                     check_if_dead_proxy = input(
                         "the proxy server might have died, continue y/N"
@@ -430,7 +428,7 @@ class scanner:
                     if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
                         proxyenabled = False
             else:
-                response = requests.get(url, timeout=2)
+                response = get(url, timeout=2)
                 response.raise_for_status()
         except Exception as err:
             print(err)
