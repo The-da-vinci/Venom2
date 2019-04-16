@@ -8,15 +8,17 @@ try:
     from sys import platform
     from subprocess import call
     from datetime import datetime
-    from requests import get
+
+    # from requests import get
+    import requests
     from API import socks
     from time import time
 except Exception as err:
     print(err)
 
-version = ".1.0"
+version = ".1.1"
 proxyenabled = False
-testing = True
+testing = False
 Proxies = {"http": "", "https": ""}
 slash = "//"
 clr = ""
@@ -53,7 +55,6 @@ class menus:
         print("or just ./venom2.py for gui")
 
     def logo(self):
-        clear()
         print("---------------------------------------------------")
         print(" __      ________ _   _  ____  __  __   ___  ")
         print(" \ \    / /  ____| \ | |/ __ \|  \/  | |__ \ ")
@@ -66,6 +67,7 @@ class menus:
         print("---------------------------------------------------")
 
     def main_menu(self):
+        clear()
         self.logo()
         print("[1] Dork and Vuln Scan")
         print("[2] Enable Tor/Proxy Support")
@@ -76,7 +78,7 @@ class menus:
             s.scan()
         if choice == "2":
             p = proxy()
-            p.Update_proxy()
+            p.proxy_main_menu()
         if choice == "3":
             exit(0)
 
@@ -91,9 +93,13 @@ class proxy:
         self.proxy_conf = ""
 
     def proxy_main_menu(self):
+        clear()
+        m = menus()
+        m.logo()
         print("[1] Set proxy")
         print("[2] Update proxy")
         print("[3] Remove proxy")
+        print("[4] Test proxy")
         print("[5] Back to main menu")
         proxy_choice = input(":")
         if proxy_choice == "1":
@@ -103,9 +109,12 @@ class proxy:
         if proxy_choice == "3":
             self.Remove_proxy()
         if proxy_choice == "4":
+            self.test_proxy()
+        if proxy_choice == "5":
             return
 
     def Update_proxy(self):
+        global proxyenabled
         try:
             if testing is not True:
                 self.proxy_type = input("Is the proxy socks4 or socks5?\n:")
@@ -137,6 +146,27 @@ class proxy:
                 print("%s proxy enabled!" % self.proxy_type)
         except Exception as err:
             print(err)
+            return
+
+    def Remove_proxy(self):
+        global proxyenabled
+        Proxies = {"http": "", "https": ""}
+        proxyenabled = False
+
+    def test_proxy(self):
+        global proxyenabled
+        try:
+            if proxyenabled is True:
+                requests.get("http://google.com", proxies=Proxies, timeout=2)
+                print(requests.status_codes)
+                input("Press Enter to continue...")
+            else:
+                print("Proxy is not enabled!")
+                input("Press Enter to continue...")
+        except Exception as err:
+            print(err)
+            print("Proxy is not working!")
+            input("Press Enter to continue...")
             return
 
 
@@ -208,6 +238,7 @@ class scanner:
             self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
             m = menus()
+            clear()
             m.logo()
             print("Program Paused")
             print("[1] Unpause")
@@ -218,7 +249,7 @@ class scanner:
             if choise == "1":
                 return
             if choise == "2":
-                pass
+                self.Testing_done_choise()
             if choise == "3":
                 m.main_menu()
             if choise == "4":
@@ -254,15 +285,12 @@ class scanner:
                 urls.extend(stringreg.findall(result))
             basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", result)
             for url in urls:
-                if (
-                    (basename is None)
-                    or "microsoft" in url
-                    or "bing" in url
-                ):
+                if (basename is None) or "microsoft" in url or "bing" in url:
                     pass
                 else:
                     self.crawled_sites.append(url)
             m = menus()
+            clear()
             m.logo()
             percent = int((1 * progress / int(len(self.dorks_in_memory))) * 100)
             start_time = datetime.now()
@@ -287,12 +315,15 @@ class scanner:
                     "%s:%s:%s" % (hours, minutes, seconds),
                 )
             )
-        print("\n\nURLS:", len(self.crawled_sites))
-        await self.Testing_done_choise()
+        self.Testing_done_choise()
 
-    async def Testing_done_choise(self):
-        self.use_final_list = False
+    def Testing_done_choise(self):
         m = menus()
+        clear()
+        if self.use_final_list is False:
+            print("URLS:", len(self.crawled_sites))
+        elif self.use_final_list is True:
+            print("URLS:", len(self.Final_list))
         m.logo()
         print("[1] Sort URLs")
         print("[2] Save URLs to a file")
@@ -300,9 +331,12 @@ class scanner:
         print("[4] Back to main menu")
         choise = input(":")
         if choise == "1":
-            await self.pre_check_url()
+            self.pre_check_url()
         if choise == "2":
-            print("\nSaving valid URLs (" + str(len(self.Final_list)) + ") to file")
+            if self.use_final_list is True:
+                print("\nSaving URLs (" + str(len(self.Final_list)) + ") to file")
+            else:
+                print("\nSaving URLs (" + str(len(self.crawled_sites)) + ") to file")
             filename = input("Filename: ").encode("utf-8")
             save_file = open(filename, "w", encoding="utf-8")
             if self.use_final_list is True:
@@ -315,90 +349,82 @@ class scanner:
                 for url in self.crawled_sites:
                     save_file.write(url + "\r\n")
                 save_file.close()
-            print("Urls saved to " + filename)
+            print("Urls saved to " + str(filename.decode("utf-8")))
+            input("Press enter to continue...")
         elif choise == "3":
             print("\nPrinting all URLs:\n")
             self.Final_list.sort()
-            for t in self.Final_list:
-                print(t)
+            print(self.Final_list)
         elif choise == "4":
             m.main_menu()
         else:
-            await self.Testing_done_choise()
+            self.Testing_done_choise()
 
-    async def pre_check_url(self):
+    def pre_check_url(self):
+        self.use_final_list = True
         timestart = datetime.now()
-        futures = []
         progress = 0
-        loop = asyncio.get_event_loop()
+        fifth = 0
         for url in self.crawled_sites:
+            self.app_url = True
             for i in self.search_ignore:
-                future = loop.run_in_executor(None, self.check_url, url, i)
-                futures.append(future)
-            for future in futures:
-                counter = len(self.search_ignore)
-                result = await future
-                if result is not None:
+                basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
+                if basename is None:
                     break
-                elif counter == 0:
-                    self.Final_list.append(url)
-                    self.use_final_list is True
-
-            m = menus()
-            m.logo()
+                else:
+                    basename = basename.group(0)
+                    x = search(i, url)
+                    if x is not None:
+                        self.app_url = False
+                        break
+            if basename not in self.domains and self.app_url is True:
+                self.domains.add(basename)
+                self.Final_list.append(url)
+            fifth += 1
             progress += 1
-            percent = int((1 * progress / int(len(self.crawled_sites))) * 100)
-            start_time = datetime.now()
-            timeduration = start_time - timestart
-            ticktock = timeduration.seconds
-            hours, remainder = divmod(ticktock, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            print(
-                "| Collected urls: <%s> \r\n"
-                "| Sorted URLs: <%s> \r\n"
-                "| Sites: <%s/%s> Progressed so far \r\n"
-                "| Percent Done: <%s> \r\n"
-                "| Url In Progress: %s \r\n"
-                "| Elapsed Time: <%s> \r\n"
-                % (
-                    len(self.crawled_sites),
-                    len(self.Final_list),
-                    progress,
-                    len(self.crawled_sites),
-                    percent,
-                    url,
-                    "%s:%s:%s" % (hours, minutes, seconds),
+            if fifth == 5:
+                fifth = 0
+                m = menus()
+                clear()
+                m.logo()
+                percent = int((1 * progress / int(len(self.crawled_sites))) * 100)
+                start_time = datetime.now()
+                timeduration = start_time - timestart
+                ticktock = timeduration.seconds
+                hours, remainder = divmod(ticktock, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                print(
+                    "| Collected urls: <%s> \r\n"
+                    "| Sorted URLs: <%s> \r\n"
+                    "| Sites: <%s/%s> Progressed so far \r\n"
+                    "| Percent Done: <%s> \r\n"
+                    "| Url In Progress: %s \r\n"
+                    "| Elapsed Time: <%s> \r\n"
+                    % (
+                        len(self.crawled_sites),
+                        len(self.Final_list),
+                        progress,
+                        len(self.crawled_sites),
+                        percent,
+                        url,
+                        "%s:%s:%s" % (hours, minutes, seconds),
+                    )
                 )
-            )
         print("URLs sorted, there are now %s URLs" % len(self.Final_list))
         return
 
-    def check_url(self, url, check_against):
-        basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", url)
-        if basename is None:
-            return
-        else:
-            basename = basename.group(0)
-        dont_append_url = False
-        if (basename is None) or search(check_against, basename):
-            dont_append_url = True
-        if (basename not in self.domains) and (dont_append_url is not True):
-            self.domains.add(basename)
-            return url
-
     def send_request(self, url):
         global proxyenabled
-        response = {"text": ""}
+        response = None
         try:
-            if testing is not True:
-                response = get(url, timeout=2)
-                response.raise_for_status()
-                return
-            elif testing is True:
+            if testing is True:
+                pass
+            elif testing is not True:
                 if proxyenabled is True:
                     if Proxies.get("http") != "":
-                        response = get(url, proxies=Proxies, timeout=2)
+                        response = requests.get(url, proxies=Proxies, timeout=2)
                         response.raise_for_status()
+                        print(requests.status_codes)
                     else:
                         check_if_dead_proxy = input(
                             "the proxy server might have died, continue y/N"
@@ -408,14 +434,12 @@ class scanner:
                         if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
                             proxyenabled = False
                 else:
-                    response = get(url, timeout=2)
+                    response = requests.get(url, timeout=2)
                     response.raise_for_status()
         except Exception as err:
             print(err)
         finally:
-            if response.text == "":
-                return
-            else:
+            if response.raise_for_status() is None:
                 return response.text
 
 
@@ -444,12 +468,13 @@ if __name__ == "__main__":
         print("target:" + args.target + "dorks:" + str(args.dorks) + "pages:" + str(args.pages))
         s = scanner()
         s.scan(target=args.target, dorks=args.dorks, pages=args.pages)
-    if testing is True:
-        # s = scanner()
-        # Proxies["http"] = "socks5://127.0.0.1:9050"
-        # Proxies["https"] = "socks5://127.0.0.1:9050"
-        # proxyenabled = True
-        pass
+    if testing is not True:
+        s = scanner()
+        Proxies["http"] = "socks5://127.0.0.1:9050"
+        Proxies["https"] = "socks5://127.0.0.1:9050"
+        proxyenabled = True
+        # s.scan(target='.com', dorks=5, pages=5)
+        # pass
     m = menus()
     running = True
     main()
