@@ -2,12 +2,13 @@
 
 Legal Disclaimer
 ----
+Venom2 is intended to be used by security researchers in a legal manner.
 Usage of Venom2 for finding targets is illegal. It is the end user's responsibility to obey all applicable local, state and
 federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program!
 
 Introduction
 ----
-V3n0M is a free and open source scanner, that automates the process of finding possibly SQL injection vulnerable URLs. It harnesses the power of async, and proxy support to find possible vulnerabilities. Allows you to find penetration testing target's possibly SQLI vulnerable sites.
+V3n0M is a free and open source scanner, that automates the process of finding possibly SQL injection vulnerable URLs. It harnesses the power of async, proxy support, and power of Python3 to find possible vulnerabilities. Allows you to find penetration testing target's possibly SQLI vulnerable sites.
 
 Installation
 ----
