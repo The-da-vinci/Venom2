@@ -8,7 +8,7 @@ try:
     from sys import platform
     from subprocess import call
     from datetime import datetime
-    from requests import get, status_codes, raise_for_status
+    from requests import get, status_codes
     from API import socks
     from time import time
 except Exception as err:
@@ -424,8 +424,6 @@ class scanner:
 # main program code here #
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("-v", "--verbosity", action="store_true", help="increase output verbosity")
-    # gotta fix accepting optional
     parser.add_argument(
         "-p",
         "--proxy",
