@@ -1,0 +1,4 @@
+argparse<=1.4.0
+requests<=2.21.0
+requests[socks]<=2.21.0
+datetime<=4.3

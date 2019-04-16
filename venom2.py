@@ -342,13 +342,12 @@ class scanner:
             if self.use_final_list is True:
                 self.Final_list.sort()
                 for url in self.Final_list:
-                    save_file.write(url + "\r\n")
-                save_file.close()
+                    save_file.write(url + "\r")
             else:
                 self.crawled_sites.sort()
                 for url in self.crawled_sites:
-                    save_file.write(url + "\r\n")
-                save_file.close()
+                    save_file.write(url + "\r")
+            save_file.close()
             print("Urls saved to " + str(filename.decode("utf-8")))
             input("Press enter to continue...")
         elif choise == "3":
@@ -417,25 +416,22 @@ class scanner:
         global proxyenabled
         response = None
         try:
-            if testing is True:
-                pass
-            elif testing is not True:
-                if proxyenabled is True:
-                    if Proxies.get("http") != "":
-                        response = requests.get(url, proxies=Proxies, timeout=2)
-                        response.raise_for_status()
-                        print(requests.status_codes)
-                    else:
-                        check_if_dead_proxy = input(
-                            "the proxy server might have died, continue y/N"
-                        )
-                        if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
-                            exit(0)
-                        if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
-                            proxyenabled = False
-                else:
-                    response = requests.get(url, timeout=2)
+            if proxyenabled is True:
+                if Proxies.get("http") != "":
+                    response = requests.get(url, proxies=Proxies, timeout=2)
                     response.raise_for_status()
+                    print(requests.status_codes)
+                else:
+                    check_if_dead_proxy = input(
+                        "the proxy server might have died, continue y/N"
+                    )
+                    if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
+                        exit(0)
+                    if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
+                        proxyenabled = False
+            else:
+                response = requests.get(url, timeout=2)
+                response.raise_for_status()
         except Exception as err:
             print(err)
         finally:
@@ -469,12 +465,12 @@ if __name__ == "__main__":
         s = scanner()
         s.scan(target=args.target, dorks=args.dorks, pages=args.pages)
     if testing is not True:
-        s = scanner()
-        Proxies["http"] = "socks5://127.0.0.1:9050"
-        Proxies["https"] = "socks5://127.0.0.1:9050"
-        proxyenabled = True
+        # s = scanner()
+        # Proxies["http"] = "socks5://127.0.0.1:9050"
+        # Proxies["https"] = "socks5://127.0.0.1:9050"
+        # proxyenabled = True
         # s.scan(target='.com', dorks=5, pages=5)
-        # pass
+        pass
     m = menus()
     running = True
     main()
