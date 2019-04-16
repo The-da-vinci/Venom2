@@ -207,16 +207,10 @@ class scanner:
             else:
                 dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
             try:
-                if dork_count >= 1:
-                    i = 0
-                    while i < dork_count:
-                        self.dorks_in_memory.append(self.dorks[i])
-                        i += 1
-                else:
-                    i = 0
-                    while i < dork_count:
-                        self.dorks_in_memory.append(self.dorks[i])
-                        i += 1
+                i = 0
+                while i < dork_count:
+                    self.dorks_in_memory.append(self.dorks[i])
+                    i += 1
             except Exception as err:
                 print(err)
                 return
@@ -412,9 +406,7 @@ class scanner:
                     response.raise_for_status()
                     print(status_codes)
                 else:
-                    check_if_dead_proxy = input(
-                        "the proxy server might have died, continue y/N"
-                    )
+                    check_if_dead_proxy = input("the proxy server might have died, continue y/N")
                     if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
                         exit(0)
                     if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
