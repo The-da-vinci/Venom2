@@ -181,12 +181,18 @@ class proxy:
             ip = input("URL, for example. 'http://google.com'")
             if ip == "":
                 ip = "http://google.com"
-
         try:
             if proxyenabled is True:
-                get(ip, proxies=Proxies, timeout=2)
-                print(status_codes)
-                input("Press Enter to continue...")
+                try:
+                    s = get(ip, proxies=Proxies, timeout=2)
+                    if s.status_code == 200:
+                        print("Proxyserver works!")
+                        input("Press Enter to continue...")
+                        return
+                except Exception as err:
+                    print(err)
+                    proxyenabled = False
+                    input("Press Enter to continue...")
             else:
                 print("Proxy is not enabled!")
                 input("Press Enter to continue...")
@@ -392,6 +398,8 @@ class scanner:
             print("\nPrinting all URLs:\n")
             self.Final_list.sort()
             print(self.Final_list)
+            input("Press enter to exit...")
+            exit(0)
         elif choise == "4":
             m.main_menu()
         else:
@@ -458,13 +466,10 @@ class scanner:
                 if Proxies.get("http") != "":
                     response = get(url, proxies=Proxies, timeout=2)
                     response.raise_for_status()
-                    print(status_codes)
+                    if response.status_code != 200:
+                        raise response.status_code
                 else:
                     check_if_dead_proxy = input("the proxy server might have died, continue y/N")
-                    if check_if_dead_proxy == "N" or check_if_dead_proxy == "":
-                        exit(0)
-                    if check_if_dead_proxy == "y" or check_if_dead_proxy == "Y":
-                        proxyenabled = False
             else:
                 response = get(url, timeout=2)
                 response.raise_for_status()
