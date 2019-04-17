@@ -153,20 +153,19 @@ class proxy:
                 print("Unknown choice, retuning to main menu.")
             if (self.username == "") and (self.password == ""):
                 proxy_conf = "{}://{}:{}".format(self.proxy_type, self.proxy_ip, self.proxy_port)
-                proxyenabled = True
-                Proxies["http"] = proxy_conf
-                Proxies["https"] = proxy_conf
-                print("%s proxy enabled!" % self.proxy_type)
             elif len(self.username) >= 1 and len(self.password) >= 1:
                 proxy_conf = "{}://{}:{}@{}:{}".format(
                     self.proxy_type, self.username, self.password, self.proxy_ip, self.proxy_port
                 )
-                proxyenabled = True
-                Proxies["http"] = proxy_conf
-                Proxies["https"] = proxy_conf
-                print("%s proxy enabled!" % self.proxy_type)
+            Proxies["http"] = proxy_conf
+            Proxies["https"] = proxy_conf
+            proxyenabled = True
+            print("%s proxy enabled!" % self.proxy_type)
+            print("Testing proxy server...")
+            self.test_proxy()
         except Exception as err:
             print(err)
+            input("Press Enter to continue...")
             return
 
     def Remove_proxy(self):
@@ -174,11 +173,18 @@ class proxy:
         Proxies = {"http": "", "https": ""}
         proxyenabled = False
 
-    def test_proxy(self):
+    def test_proxy(self, **kwargs):
         global proxyenabled
+        if "ip" in kwargs:
+            ip = kwargs.get("ip")
+        else:
+            ip = input("URL, for example. 'http://google.com'")
+            if ip == '':
+                ip = 'http://google.com'
+
         try:
             if proxyenabled is True:
-                get("http://google.com", proxies=Proxies, timeout=2)
+                get(ip, proxies=Proxies, timeout=2)
                 print(status_codes)
                 input("Press Enter to continue...")
             else:
@@ -229,26 +235,44 @@ class scanner:
         global proxyenabled
 
         try:
-            if "target" in kwargs:
-                self.tld = kwargs.get("target")
-            else:
-                self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
-            if "dorks" in kwargs:
-                dork_count = kwargs.get("dorks")
-            else:
-                dork_count = int(input("Choose the number of dorks (0 for all)\r\n:"))
             try:
-                i = 0
-                while i < dork_count:
-                    self.dorks_in_memory.append(self.dorks[i])
-                    i += 1
+                if "target" in kwargs:
+                    self.tld = kwargs.get("target")
+                else:
+                    self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
+                    if self.tld == '':
+                        self.tld = ".com"
+                if "dorks" in kwargs:
+                    dork_count = kwargs.get("dorks")
+                else:
+                    dork_count = input("Choose the number of dorks (0 for all)\r\n:")
+                    if dork_count == '':
+                        dork_count = '10'
+                    
+                try:
+                    i = 0
+                    while i < int(dork_count):
+                        self.dorks_in_memory.append(self.dorks[i])
+                        i += 1
+                except Exception as err:
+                    print(err)
+                    input("Press Enter to continue...")
+                    return
             except Exception as err:
                 print(err)
+                input("Press Enter to continue...")
                 return
             if "pages" in kwargs:
                 self.Number_of_pages = kwargs.get("pages")
             else:
-                self.Number_of_pages = int(input("Enter number of pages to go through\n:"))
+                try:
+                    self.Number_of_pages = input("Enter number of pages to go through\n:")
+                    if self.Number_of_pages == '':
+                        self.Number_of_pages = '10'
+                except Exception as err:
+                    print(err)
+                    input("Press Enter to continue...")
+                    return
             self.loop = get_event_loop()
             self.usearch = self.loop.run_until_complete(self.crawl())
         except KeyboardInterrupt:
@@ -280,7 +304,7 @@ class scanner:
             progress += 1
             page = 0
             query = "{}+site:{}".format(dork, self.tld)
-            while page < self.Number_of_pages:
+            while page < int(self.Number_of_pages):
                 loop = get_event_loop()
                 search_query = (
                     "http://www.bing.com/search?q="
