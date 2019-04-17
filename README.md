@@ -12,7 +12,7 @@ Venom2 is a free and open source scanner, that automates the process of finding 
 
 Installation
 ----
-Preferably, you can download sqlmap by cloning the Git repository:
+Preferably, you can download Venom2 by cloning the Git repository:
 
     git clone https://github.com/The-da-vinci/Venom2.git
     cd venom2
