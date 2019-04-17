@@ -179,8 +179,8 @@ class proxy:
             ip = kwargs.get("ip")
         else:
             ip = input("URL, for example. 'http://google.com'")
-            if ip == '':
-                ip = 'http://google.com'
+            if ip == "":
+                ip = "http://google.com"
 
         try:
             if proxyenabled is True:
@@ -240,15 +240,14 @@ class scanner:
                     self.tld = kwargs.get("target")
                 else:
                     self.tld = input("\nChoose your target domain or a search word ('*.com')\r\n:")
-                    if self.tld == '':
+                    if self.tld == "":
                         self.tld = ".com"
                 if "dorks" in kwargs:
                     dork_count = kwargs.get("dorks")
                 else:
                     dork_count = input("Choose the number of dorks (0 for all)\r\n:")
-                    if dork_count == '':
-                        dork_count = '10'
-                    
+                    if dork_count == "":
+                        dork_count = "10"
                 try:
                     i = 0
                     while i < int(dork_count):
@@ -267,8 +266,8 @@ class scanner:
             else:
                 try:
                     self.Number_of_pages = input("Enter number of pages to go through\n:")
-                    if self.Number_of_pages == '':
-                        self.Number_of_pages = '10'
+                    if self.Number_of_pages == "":
+                        self.Number_of_pages = "10"
                 except Exception as err:
                     print(err)
                     input("Press Enter to continue...")
