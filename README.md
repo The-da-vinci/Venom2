@@ -8,7 +8,7 @@ federal laws. Developers assume no liability and are not responsible for any mis
 
 Introduction
 ----
-V3n0M is a free and open source scanner, that automates the process of finding possibly SQL injection vulnerable URLs. It harnesses the power of async, proxy support, and power of Python3 to find possible vulnerabilities. Allows you to find penetration testing target's possibly SQLI vulnerable sites.
+Venom2 is a free and open source scanner, that automates the process of finding possibly SQL injection vulnerable URLs. It harnesses the power of async, proxy support, and power of Python3 to find possible vulnerabilities. Allows you to find penetration testing target's possibly SQLI vulnerable sites.
 
 Installation
 ----
