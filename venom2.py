@@ -186,7 +186,14 @@ class proxy:
                 try:
                     s = get(ip, proxies=Proxies, timeout=2)
                     if s.status_code == 200:
-                        print("Proxyserver works!")
+                        """
+                        Check external IP address
+                        """
+                        ext_ip = get("https://api.ipify.org?format=raw",
+                                    proxies=Proxies,
+                                    timeout=5)
+                        print("external IP: %s" % str(ext_ip))
+                        print("Proxyserver seems to work, verify the IP address")
                         input("Press Enter to continue...")
                         return
                 except Exception as err:
@@ -256,7 +263,8 @@ class scanner:
                         dork_count = "10"
                 try:
                     i = 0
-                    while i < int(dork_count):
+                    dork_count = int(dork_count)
+                    while i < dork_count:
                         self.dorks_in_memory.append(self.dorks[i])
                         i += 1
                 except Exception as err:
@@ -305,33 +313,44 @@ class scanner:
         timestart = datetime.now()
         progress = 0
         futures = []
+        self.Number_of_pages = int(self.Number_of_pages)
+        stringreg = compile('(?<=href=")(http.*?(?="))')
+
         for dork in self.dorks_in_memory:
             progress += 1
             page = 0
             query = "{}+site:{}".format(dork, self.tld)
-            while page < int(self.Number_of_pages):
+            while (page < self.Number_of_pages):
                 loop = get_event_loop()
                 search_query = (
-                    "http://www.bing.com/search?q="
-                    + query
-                    + "&go=Submit&first="
-                    + str(page * 50 + 1)
-                    + "&count=50"
-                )
+                        "http://www.bind.com/search?a=" +
+                        query +
+                        "&go=Submit&first= " +
+                        str(page * 50 + 1) +
+                        "&count=50"
+                        )
                 page += 1
-                future = loop.run_in_executor(None, self.send_request, search_query)
+                urls = []
+                self.domains = set()
+                future = loop.run_in_executor(None, 
+                            self.send_request, 
+                            search_query)
                 futures.append(future)
-            stringreg = compile('(?<=href=")(http.*?(?="))')
-            urls = []
-            self.domains = set()
+
             for future in futures:
                 result = await future
+                if (result == None):
+                    # Proxy server has stopped responding to us and user
+                    # wants to quit now.
+                    self.Testing_done_choise()
+                    # Incase Testing_done_choise returns, return from here
+                    return
                 urls.extend(stringreg.findall(result))
             basename = search(r"(?<=(\:\/\/))[^\/]*(?=\/)", result)
             for url in urls:
-                if (basename is None) or "microsoft" in url or "bing" in url:
-                    pass
-                else:
+                if ((basename is not None) and
+                        ("microsoft" not in url) and
+                        ("bing" not in url)):
                     self.crawled_sites.append(url)
             m = menus()
             clear()
@@ -422,7 +441,7 @@ class scanner:
                     if x is not None:
                         self.app_url = False
                         break
-            if basename not in self.domains and self.app_url is True:
+            if (basename not in self.domains) and (self.app_url is True):
                 self.domains.add(basename)
                 self.Final_list.append(url)
             fifth += 1
@@ -470,6 +489,9 @@ class scanner:
                         raise response.status_code
                 else:
                     check_if_dead_proxy = input("the proxy server might have died, continue y/N")
+                    if (("n" in check_in_dead_proxy) or 
+                            ("N" in check_in_dead_proxy)):
+                        return None
             else:
                 response = get(url, timeout=2)
                 response.raise_for_status()
